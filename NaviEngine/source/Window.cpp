@@ -1,5 +1,6 @@
 #include "Window.h"
 
+
 HRESULT
 Window::init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc) {
   //Store instance of the class
@@ -69,3 +70,4 @@ void Window::render()
 void Window::destroy()
 {
 }
+

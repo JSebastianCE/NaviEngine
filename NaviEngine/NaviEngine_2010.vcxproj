@@ -399,12 +399,14 @@
   <ItemGroup />
   <ItemGroup>
     <ClCompile Include="NaviEngine.cpp" />
+    <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Device.h" />
     <ClInclude Include="include\Prerequisites.h" />
     <ClInclude Include="include\Window.h" />
     <CLInclude Include="resource.h" />
