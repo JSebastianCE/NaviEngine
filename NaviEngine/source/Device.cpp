@@ -9,7 +9,7 @@ HRESULT
 Device::CreateRenderTargetView(ID3D11Resource* pResource,
   const D3D11_RENDER_TARGET_VIEW_DESC* pDesc,
   ID3D11RenderTargetView** ppRTView) {
-  //Validae paramentros de entrada
+  //Validar paramentros de entrada
   if (!pResource) {
     ERROR("Device", "CreateRenderTargetView", "pResource is nullptr");
     return E_INVALIDARG;

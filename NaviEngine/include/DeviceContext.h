@@ -99,9 +99,19 @@ public:
               UINT StartIndexLocation,
               INT BaseVertexLocation); 
 
+  void
+  RSSetState(ID3D11RasterizerState* pRasterizerState);
+
+  void
+  OMSetBlendState(ID3D11BlendState* pBlendState,
+                  const float BlendFactor[4],
+                  unsigned int SampleMask);
 
 
-private:
+
+
+
+public:
   ID3D11DeviceContext* m_deviceContext = nullptr;
 
 };
