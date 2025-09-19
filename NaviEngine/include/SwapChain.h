@@ -13,11 +13,25 @@ public:
   ~SwapChain() = default;
 
   HRESULT
-    init(Device& device,
+  init(Device& device,
       DeviceContext& deviceContext,
       Texture& backBuffer,
       Window window);
   //multi alaising mejora la calidad de pixeles
+
+  void
+  update();
+
+  void
+  render();
+
+  void
+  destroy();
+
+  void
+  present();
+
+
 
 private:
   IDXGISwapChain* m_swapChain = nullptr;
@@ -31,7 +45,7 @@ private:
 
   unsigned int m_qualityLevels;
 
-  IDXGIDevice* m_dxgDevice = nullptr;
+  IDXGIDevice* m_dxgiDevice = nullptr;
 
   IDXGIAdapter* m_dxgiAdapter = nullptr;
 

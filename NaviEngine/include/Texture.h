@@ -30,20 +30,20 @@ public:
 
 
   void
-    update();
+  update();
 
   void
-    render(DeviceContext& deviceContext, unsigned int StartSlot, unsigned int NumView);
+  render(DeviceContext& deviceContext, unsigned int StartSlot, unsigned int NumView);
 
   void
-    destroy();
+  destroy();
 
 
 public:
 
   ID3D11Texture2D* m_texture = nullptr;
 
-  ID3D11ShaderResourceView* m_rextureFromImg = nullptr;
+  ID3D11ShaderResourceView* m_textureFromImg = nullptr;
 
   std::string m_rextureName;
 
