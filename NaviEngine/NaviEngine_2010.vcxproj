@@ -399,8 +399,10 @@
   <ItemGroup />
   <ItemGroup>
     <ClCompile Include="NaviEngine.cpp" />
+    <ClCompile Include="source\DepthStencilView.cpp" />
     <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\DeviceContext.cpp" />
+    <ClCompile Include="source\RenderTargetView.cpp" />
     <ClCompile Include="source\SwapChain.cpp" />
     <ClCompile Include="source\Texture.cpp" />
     <ClCompile Include="source\Window.cpp" />
@@ -409,9 +411,11 @@
     <None Include="NaviEngine.fx" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\DepthStencilView.h" />
     <ClInclude Include="include\Device.h" />
     <ClInclude Include="include\DeviceContext.h" />
     <ClInclude Include="include\Prerequisites.h" />
+    <ClInclude Include="include\RenderTargetView.h" />
     <ClInclude Include="include\SwapChain.h" />
     <ClInclude Include="include\Texture.h" />
     <ClInclude Include="include\Window.h" />

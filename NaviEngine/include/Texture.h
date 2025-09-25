@@ -8,8 +8,9 @@ class DeviceContext;
 class
 Texture {
 public:
-  Texture();
-  ~Texture();
+  Texture() = default;
+
+  ~Texture() = default;
 
   HRESULT
   init(Device& device,

@@ -2,34 +2,32 @@
 #include "Device.h"
 #include "DeviceContext.h"
 
-
-HRESULT 
+HRESULT
 Texture::init(Device& device,
-              const std::string& texturename,
-              ExtensionType extensionType) {
-  return E_NOTIMPL;
+  const std::string& texturename,
+  ExtensionType extensionType) {
+  return E_NOTIMPL; // aún no implementado (para PNG, JPG, etc.)
 }
 
 HRESULT
 Texture::init(Device& device,
-              unsigned int widht,
-              unsigned int height,
-              DXGI_FORMAT Format,
-              unsigned int BindFlags,
-              unsigned int sampleCount,
-              unsigned int qualityLevels) {
+        unsigned int widht,
+        unsigned int height,
+        DXGI_FORMAT Format,
+        unsigned int BindFlags,
+        unsigned int sampleCount,
+        unsigned int qualityLevels) {
   if (!device.m_device) {
     ERROR("Texture", "init", "Device is null");
     return E_POINTER;
   }
   if (widht == 0 || height == 0) {
-    ERROR("Texture", "init", "Widht and height must be greater than 0");
-    E_INVALIDARG;
+    ERROR("Texture", "init", "Width and height must be greater than 0");
+    return E_INVALIDARG;
   }
 
-  // Create depth stencil texture
-  D3D11_TEXTURE2D_DESC desc;
-  memset(&desc, 0, sizeof(desc));
+  // Create depth stencil / render target / general texture
+  D3D11_TEXTURE2D_DESC desc = {};
   desc.Width = widht;
   desc.Height = height;
   desc.MipLevels = 1;
@@ -45,10 +43,9 @@ Texture::init(Device& device,
   HRESULT hr = device.CreateTexture2D(&desc, nullptr, &m_texture);
 
   if (FAILED(hr)) {
-    ERROR("Texture","init",
+    ERROR("Texture", "init",
       ("Failed to create texture with specified params. HRESULT: " + std::to_string(hr)).c_str());
-  return hr;
-
+    return hr;
   }
 
   return S_OK;
@@ -57,41 +54,43 @@ Texture::init(Device& device,
 HRESULT
 Texture::init(Device& device, Texture& textureRef, DXGI_FORMAT format) {
   if (!device.m_device) {
-    ERROR("Texture", "init", "Device is nulll.");
+    ERROR("Texture", "init", "Device is null.");
     return E_POINTER;
   }
   if (!textureRef.m_texture) {
     ERROR("Texture", "init", "Texture is null");
     return E_POINTER;
   }
-  //Create Shaders Resource View
+
+  // Create Shader Resource View (para texturas cargadas de imagen)
   D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.Format = format;
   srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
   srvDesc.Texture2D.MipLevels = 1;
   srvDesc.Texture2D.MostDetailedMip = 0;
 
-  HRESULT hr = device.m_device->CreateShaderResourceView(textureRef.m_texture, 
-                                                        &srvDesc, 
-                                                        &m_textureFromImg);
+  HRESULT hr = device.m_device->CreateShaderResourceView(textureRef.m_texture,
+    &srvDesc,
+    &m_textureFromImg);
 
   if (FAILED(hr)) {
     ERROR("Texture", "init",
-      ("Failed to create shader resource view for PNG textures. HRESULT: " + std::to_string(hr)).c_str());
+      ("Failed to create shader resource view for texture. HRESULT: " + std::to_string(hr)).c_str());
     return hr;
   }
+
+  return S_OK;
 }
 
 void
 Texture::update() {
-
+  // TODO: si quieres actualizar dinámicamente texturas (ej. streaming)
 }
-
 
 void
 Texture::render(DeviceContext& deviceContext,
-                unsigned int StartSlot,
-                unsigned int NumView) {
+  unsigned int StartSlot,
+  unsigned int NumView) {
   if (!deviceContext.m_deviceContext) {
     ERROR("Texture", "render", "Device Context is null.");
     return;
@@ -104,10 +103,10 @@ Texture::render(DeviceContext& deviceContext,
 
 void
 Texture::destroy() {
-  if (m_texture != nullptr) {
+  if (m_texture) {
     SAFE_RELEASE(m_texture);
   }
-  else if (m_textureFromImg != nullptr) {
+  if (m_textureFromImg) {
     SAFE_RELEASE(m_textureFromImg);
   }
 }
