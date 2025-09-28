@@ -8,7 +8,6 @@ HRESULT
 Device::CreateRenderTargetView(ID3D11Resource* pResource,
 	const D3D11_RENDER_TARGET_VIEW_DESC* pDesc,
 	ID3D11RenderTargetView** ppRTView) {
-	// Validar parametros de entrada
 	if (!pResource) {
 		ERROR("Device", "CreateRenderTargetView", "pResource is nullptr");
 		return E_INVALIDARG;
@@ -18,7 +17,6 @@ Device::CreateRenderTargetView(ID3D11Resource* pResource,
 		return E_POINTER;
 	}
 
-	// Crear el Render Target View
 	HRESULT hr = m_device->CreateRenderTargetView(pResource, pDesc, ppRTView);
 
 	if (SUCCEEDED(hr)) {
@@ -37,7 +35,6 @@ HRESULT
 Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC* pDesc,
 	const D3D11_SUBRESOURCE_DATA* pInitialData,
 	ID3D11Texture2D** ppTexture2D) {
-	// Validar parametros de entrada
 	if (!pDesc) {
 		ERROR("Device", "CreateTexture2D", "pDesc is nullptr");
 		return E_INVALIDARG;
@@ -47,7 +44,6 @@ Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC* pDesc,
 		return E_POINTER;
 	}
 
-	// Crear la textura 2D
 	HRESULT hr = m_device->CreateTexture2D(pDesc, pInitialData, ppTexture2D);
 
 	if (SUCCEEDED(hr)) {
@@ -66,7 +62,6 @@ HRESULT
 Device::CreateDepthStencilView(ID3D11Resource* pResource,
 	const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc,
 	ID3D11DepthStencilView** ppDepthStencilView) {
-	// Validar parametros de entrada
 	if (!pResource) {
 		ERROR("Device", "CreateDepthStencilView", "pResource is nullptr");
 		return E_INVALIDARG;
@@ -76,7 +71,6 @@ Device::CreateDepthStencilView(ID3D11Resource* pResource,
 		return E_POINTER;
 	}
 
-	// Crear el Depth Stencil View
 	HRESULT hr = m_device->CreateDepthStencilView(pResource, pDesc, ppDepthStencilView);
 
 	if (SUCCEEDED(hr)) {
@@ -96,7 +90,6 @@ Device::CreateVertexShader(const void* pShaderBytecode,
 	unsigned int BytecodeLength,
 	ID3D11ClassLinkage* pClassLinkage,
 	ID3D11VertexShader** ppVertexShader) {
-	// Validar parametros de entrada
 	if (!pShaderBytecode) {
 		ERROR("Device", "CreateVertexShader", "pShaderBytecode is nullptr");
 		return E_INVALIDARG;
@@ -106,7 +99,6 @@ Device::CreateVertexShader(const void* pShaderBytecode,
 		return E_POINTER;
 	}
 
-	// Crear el Vertex Shader
 	HRESULT hr = m_device->CreateVertexShader(pShaderBytecode,
 		BytecodeLength,
 		pClassLinkage,
@@ -130,7 +122,6 @@ Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* pInputElementDescs,
 	const void* pShaderBytecodeWithInputSignature,
 	unsigned int BytecodeLength,
 	ID3D11InputLayout** ppInputLayout) {
-	// Validar parametros de entrada
 	if (!pInputElementDescs) {
 		ERROR("Device", "CreateInputLayout", "pInputElementDescs is nullptr");
 		return E_INVALIDARG;
@@ -140,7 +131,6 @@ Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* pInputElementDescs,
 		return E_POINTER;
 	}
 
-	// Crear el Input Layout
 	HRESULT hr = m_device->CreateInputLayout(pInputElementDescs,
 		NumElements,
 		pShaderBytecodeWithInputSignature,
@@ -164,7 +154,6 @@ Device::CreatePixelShader(const void* pShaderBytecode,
 	unsigned int BytecodeLength,
 	ID3D11ClassLinkage* pClassLinkage,
 	ID3D11PixelShader** ppPixelShader) {
-	// Validar parametros de entrada
 	if (!pShaderBytecode) {
 		ERROR("Device", "CreatePixelShader", "pShaderBytecode is nullptr");
 		return E_INVALIDARG;
@@ -174,7 +163,6 @@ Device::CreatePixelShader(const void* pShaderBytecode,
 		return E_POINTER;
 	}
 
-	// Crear el Pixel Shader
 	HRESULT hr = m_device->CreatePixelShader(pShaderBytecode,
 		BytecodeLength,
 		pClassLinkage,
@@ -195,7 +183,6 @@ Device::CreatePixelShader(const void* pShaderBytecode,
 HRESULT
 Device::CreateSamplerState(const D3D11_SAMPLER_DESC* pSamplerDesc,
 	ID3D11SamplerState** ppSamplerState) {
-	// Validar parametros de entrada
 	if (!pSamplerDesc) {
 		ERROR("Device", "CreateSamplerState", "pSamplerDesc is nullptr");
 		return E_INVALIDARG;
@@ -205,7 +192,6 @@ Device::CreateSamplerState(const D3D11_SAMPLER_DESC* pSamplerDesc,
 		return E_POINTER;
 	}
 
-	// Crear el Sampler State
 	HRESULT hr = m_device->CreateSamplerState(pSamplerDesc, ppSamplerState);
 
 	if (SUCCEEDED(hr)) {
@@ -224,7 +210,6 @@ HRESULT
 Device::CreateBuffer(const D3D11_BUFFER_DESC* pDesc,
 	const D3D11_SUBRESOURCE_DATA* pInitialData,
 	ID3D11Buffer** ppBuffer) {
-	// Validar parametros de entrada
 	if (!pDesc) {
 		ERROR("Device", "CreateBuffer", "pDesc is nullptr");
 		return E_INVALIDARG;
@@ -234,7 +219,6 @@ Device::CreateBuffer(const D3D11_BUFFER_DESC* pDesc,
 		return E_POINTER;
 	}
 
-	// Crear el Buffer
 	HRESULT hr = m_device->CreateBuffer(pDesc, pInitialData, ppBuffer);
 
 	if (SUCCEEDED(hr)) {

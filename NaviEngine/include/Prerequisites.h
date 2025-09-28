@@ -19,8 +19,26 @@
 //third Party Libraries
 
 // MACROS
+
+/**
+ * @brief Libera de manera segura un recurso de DirectX.
+ *
+ * Si el puntero no es nulo, libera la memoria con Release()
+ * y lo asigna a nullptr para evitar accesos inválidos.
+ *
+ * @param x Puntero al recurso que se va a liberar.
+ */
 #define SAFE_RELEASE(x) if(x != nullptr) x->Release(); x = nullptr;
 
+ /**
+  * @brief Macro para mostrar mensajes de creación de recursos en la ventana de depuración.
+  *
+  * Formatea un mensaje con la clase, el método y el estado actual de la creación.
+  *
+  * @param classObj Nombre de la clase donde ocurre el evento.
+  * @param method Nombre del método donde ocurre el evento.
+  * @param state Estado del recurso (ejemplo: "OK", "FAILED").
+  */
 #define MESSAGE( classObj, method, state )   \
 {                                            \
    std::wostringstream os_;                  \
@@ -28,6 +46,16 @@
    OutputDebugStringW( os_.str().c_str() );  \
 }
 
+  /**
+   * @brief Macro para registrar mensajes de error en la ventana de depuración.
+   *
+   * Captura información detallada de la clase, método y descripción del error.
+   * Si ocurre un fallo durante el registro, captura la excepción y notifica.
+   *
+   * @param classObj Nombre de la clase donde ocurre el error.
+   * @param method Nombre del método donde ocurre el error.
+   * @param errorMSG Mensaje descriptivo del error.
+   */
 #define ERROR(classObj, method, errorMSG)                     \
 {                                                             \
     try {                                                     \
@@ -40,30 +68,46 @@
     }                                                         \
 }
 
-struct SimpleVertex
-{
-  XMFLOAT3 Pos;
-  XMFLOAT2 Tex;
+   /**
+    * @brief Representa un vértice simple con posición y coordenadas de textura.
+    */
+struct 
+SimpleVertex{
+  XMFLOAT3 Pos;  /**< Coordenadas de posición del vértice (x, y, z). */
+  XMFLOAT2 Tex;  /**< Coordenadas de textura (u, v). */
 };
 
-struct CBNeverChanges
-{
-  XMMATRIX mView;
+/**
+ * @brief Constantes que nunca cambian: contiene la matriz de vista.
+ */
+struct 
+CBNeverChanges{
+  XMMATRIX mView; /**< Matriz de vista usada en la cámara. */
 };
 
-struct CBChangeOnResize
-{
-  XMMATRIX mProjection;
+/**
+ * @brief Constantes que cambian al redimensionar la ventana.
+ */
+struct 
+CBChangeOnResize{
+  XMMATRIX mProjection; /**< Matriz de proyección ajustada al tamaño de la ventana. */
 };
 
-struct CBChangesEveryFrame
-{
-  XMMATRIX mWorld;
-  XMFLOAT4 vMeshColor;
+/**
+ * @brief Constantes que cambian en cada frame.
+ */
+struct 
+CBChangesEveryFrame{
+  XMMATRIX mWorld;      /**< Matriz de mundo para transformar los objetos. */
+  XMFLOAT4 vMeshColor;  /**< Color aplicado a la malla. */
 };
 
-enum ExtensionType {
-  DDS = 0,
-  PNG = 1,
-  JPG = 2
+/**
+ * @brief Tipos de extensión soportados para las texturas.
+ */
+enum 
+ExtensionType {
+  DDS = 0, /**< Textura en formato DDS (DirectDraw Surface). */
+  PNG = 1, /**< Textura en formato PNG (Portable Network Graphics). */
+  JPG = 2  /**< Textura en formato JPG (Joint Photographic Experts Group). */
 };

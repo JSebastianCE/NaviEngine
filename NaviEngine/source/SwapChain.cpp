@@ -10,7 +10,6 @@ SwapChain::init(Device& device,
   DeviceContext& deviceContext,
   Texture& backBuffer,
   Window window) {
-  // Check if Window is valid
   if (!window.m_hWnd) {
     ERROR("SwapChain", "init", "Invalid window handle. (m_hWnd is nullptr)");
     return E_POINTER;

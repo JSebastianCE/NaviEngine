@@ -6,7 +6,7 @@ HRESULT
 Texture::init(Device& device,
   const std::string& texturename,
   ExtensionType extensionType) {
-  return E_NOTIMPL; // aún no implementado (para PNG, JPG, etc.)
+  return E_NOTIMPL; 
 }
 
 HRESULT
@@ -26,7 +26,6 @@ Texture::init(Device& device,
     return E_INVALIDARG;
   }
 
-  // Create depth stencil / render target / general texture
   D3D11_TEXTURE2D_DESC desc = {};
   desc.Width = widht;
   desc.Height = height;
@@ -62,7 +61,7 @@ Texture::init(Device& device, Texture& textureRef, DXGI_FORMAT format) {
     return E_POINTER;
   }
 
-  // Create Shader Resource View (para texturas cargadas de imagen)
+  // Create Shader Resource View
   D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.Format = format;
   srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -84,7 +83,7 @@ Texture::init(Device& device, Texture& textureRef, DXGI_FORMAT format) {
 
 void
 Texture::update() {
-  // TODO: si quieres actualizar dinámicamente texturas (ej. streaming)
+ 
 }
 
 void

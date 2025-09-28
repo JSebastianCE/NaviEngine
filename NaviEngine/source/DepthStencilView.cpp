@@ -18,7 +18,6 @@ DepthStencilView::init(Device& device, Texture& depthStencil, DXGI_FORMAT format
     return E_INVALIDARG;
   }
 
-  // Obtener descripción de la textura para saber si es MSAA
   D3D11_TEXTURE2D_DESC texDesc;
   depthStencil.m_texture->GetDesc(&texDesc);
 
@@ -27,11 +26,9 @@ DepthStencilView::init(Device& device, Texture& depthStencil, DXGI_FORMAT format
   descDSV.Format = format;
 
   if (texDesc.SampleDesc.Count > 1) {
-    // Textura multisample
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
   }
   else {
-    // Textura normal sin MSAA
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
   }
