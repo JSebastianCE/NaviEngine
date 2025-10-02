@@ -1,13 +1,23 @@
 #include "Device.h"
+
+//
+// La función `destroy` se encarga de liberar el objeto principal de Direct3D, el ID3D11Device.
+// Esto es crucial para liberar todos los recursos de la GPU cuando la aplicación termina.
+//
 void
 Device::destroy() {
 	SAFE_RELEASE(m_device);
 }
 
+//
+// `CreateRenderTargetView` es una función wrapper que crea un Render Target View.
+// Un Render Target View es una "vista" de un recurso (como una textura) que se puede usar como destino para renderizar.
+//
 HRESULT
 Device::CreateRenderTargetView(ID3D11Resource* pResource,
-	const D3D11_RENDER_TARGET_VIEW_DESC* pDesc,
-	ID3D11RenderTargetView** ppRTView) {
+															const D3D11_RENDER_TARGET_VIEW_DESC* pDesc,
+															ID3D11RenderTargetView** ppRTView) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pResource) {
 		ERROR("Device", "CreateRenderTargetView", "pResource is nullptr");
 		return E_INVALIDARG;
@@ -17,8 +27,12 @@ Device::CreateRenderTargetView(ID3D11Resource* pResource,
 		return E_POINTER;
 	}
 
-	HRESULT hr = m_device->CreateRenderTargetView(pResource, pDesc, ppRTView);
+	// Se llama a la función de Direct3D para crear la vista.
+	HRESULT hr = m_device->CreateRenderTargetView(pResource, 
+																								pDesc, 
+																								ppRTView);
 
+	// Se comprueba el resultado y se muestra un mensaje apropiado.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreateRenderTargetView",
 			"Render Target View created successfully!");
@@ -31,10 +45,15 @@ Device::CreateRenderTargetView(ID3D11Resource* pResource,
 	return hr;
 }
 
+//
+// `CreateTexture2D` crea una textura 2D en la memoria de la GPU.
+// Las texturas se usan para almacenar imágenes, buffers de renderizado, y más.
+//
 HRESULT
 Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC* pDesc,
-	const D3D11_SUBRESOURCE_DATA* pInitialData,
-	ID3D11Texture2D** ppTexture2D) {
+												const D3D11_SUBRESOURCE_DATA* pInitialData,
+												ID3D11Texture2D** ppTexture2D) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pDesc) {
 		ERROR("Device", "CreateTexture2D", "pDesc is nullptr");
 		return E_INVALIDARG;
@@ -44,8 +63,12 @@ Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC* pDesc,
 		return E_POINTER;
 	}
 
-	HRESULT hr = m_device->CreateTexture2D(pDesc, pInitialData, ppTexture2D);
+	// Se llama a la función de Direct3D para crear la textura.
+	HRESULT hr = m_device->CreateTexture2D(pDesc, 
+																				pInitialData,
+																				ppTexture2D);
 
+	// Se comprueba el resultado y se muestra un mensaje.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreateTexture2D",
 			"Texture2D created successfully!");
@@ -58,10 +81,15 @@ Device::CreateTexture2D(const D3D11_TEXTURE2D_DESC* pDesc,
 	return hr;
 }
 
+//
+// `CreateDepthStencilView` crea una vista para un buffer de profundidad y de plantilla.
+// Este buffer es esencial para el Z-Buffering, que ayuda a determinar qué polígonos son visibles.
+//
 HRESULT
 Device::CreateDepthStencilView(ID3D11Resource* pResource,
-	const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc,
-	ID3D11DepthStencilView** ppDepthStencilView) {
+															const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc,
+															ID3D11DepthStencilView** ppDepthStencilView) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pResource) {
 		ERROR("Device", "CreateDepthStencilView", "pResource is nullptr");
 		return E_INVALIDARG;
@@ -71,8 +99,12 @@ Device::CreateDepthStencilView(ID3D11Resource* pResource,
 		return E_POINTER;
 	}
 
-	HRESULT hr = m_device->CreateDepthStencilView(pResource, pDesc, ppDepthStencilView);
+	// Se llama a la función de Direct3D para crear la vista.
+	HRESULT hr = m_device->CreateDepthStencilView(pResource,
+																								pDesc, 
+																								ppDepthStencilView);
 
+	// Se comprueba el resultado y se muestra un mensaje.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreateDepthStencilView",
 			"Depth Stencil View created successfully!");
@@ -85,11 +117,16 @@ Device::CreateDepthStencilView(ID3D11Resource* pResource,
 	return hr;
 }
 
+//
+// `CreateVertexShader` crea un sombreador de vértices.
+// Este programa se ejecuta en la GPU para procesar cada vértice de los modelos 3D.
+//
 HRESULT
 Device::CreateVertexShader(const void* pShaderBytecode,
-	unsigned int BytecodeLength,
-	ID3D11ClassLinkage* pClassLinkage,
-	ID3D11VertexShader** ppVertexShader) {
+													unsigned int BytecodeLength,
+													ID3D11ClassLinkage* pClassLinkage,
+													ID3D11VertexShader** ppVertexShader) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pShaderBytecode) {
 		ERROR("Device", "CreateVertexShader", "pShaderBytecode is nullptr");
 		return E_INVALIDARG;
@@ -99,11 +136,13 @@ Device::CreateVertexShader(const void* pShaderBytecode,
 		return E_POINTER;
 	}
 
+	// Se llama a la función de Direct3D para crear el sombreador.
 	HRESULT hr = m_device->CreateVertexShader(pShaderBytecode,
-		BytecodeLength,
-		pClassLinkage,
-		ppVertexShader);
+																						BytecodeLength,
+																						pClassLinkage,
+																						ppVertexShader);
 
+	// Se comprueba el resultado y se muestra un mensaje.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreateVertexShader",
 			"Vertex Shader created successfully!");
@@ -116,12 +155,17 @@ Device::CreateVertexShader(const void* pShaderBytecode,
 	return hr;
 }
 
+//
+// `CreateInputLayout` crea una descripción del formato de los datos de los vértices.
+// Esto le dice a la tarjeta gráfica cómo interpretar la información de los vértices (posición, color, etc.).
+//
 HRESULT
 Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* pInputElementDescs,
-	unsigned int NumElements,
-	const void* pShaderBytecodeWithInputSignature,
-	unsigned int BytecodeLength,
-	ID3D11InputLayout** ppInputLayout) {
+													unsigned int NumElements,
+													const void* pShaderBytecodeWithInputSignature,
+													unsigned int BytecodeLength,
+													ID3D11InputLayout** ppInputLayout) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pInputElementDescs) {
 		ERROR("Device", "CreateInputLayout", "pInputElementDescs is nullptr");
 		return E_INVALIDARG;
@@ -131,12 +175,15 @@ Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* pInputElementDescs,
 		return E_POINTER;
 	}
 
-	HRESULT hr = m_device->CreateInputLayout(pInputElementDescs,
-		NumElements,
-		pShaderBytecodeWithInputSignature,
-		BytecodeLength,
-		ppInputLayout);
+	// Se llama a la función de Direct3D para crear el layout.
+	HRESULT
+		hr = m_device->CreateInputLayout(pInputElementDescs,
+																		NumElements,
+																		pShaderBytecodeWithInputSignature,
+																		BytecodeLength,
+																		ppInputLayout);
 
+	// Se comprueba el resultado y se muestra un mensaje.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreateInputLayout",
 			"Input Layout created successfully!");
@@ -149,11 +196,16 @@ Device::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* pInputElementDescs,
 	return hr;
 }
 
+//
+// `CreatePixelShader` crea un sombreador de píxeles.
+// Este programa se ejecuta en la GPU para determinar el color de cada píxel de un objeto.
+//
 HRESULT
 Device::CreatePixelShader(const void* pShaderBytecode,
-	unsigned int BytecodeLength,
-	ID3D11ClassLinkage* pClassLinkage,
-	ID3D11PixelShader** ppPixelShader) {
+													unsigned int BytecodeLength,
+													ID3D11ClassLinkage* pClassLinkage,
+													ID3D11PixelShader** ppPixelShader) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pShaderBytecode) {
 		ERROR("Device", "CreatePixelShader", "pShaderBytecode is nullptr");
 		return E_INVALIDARG;
@@ -163,11 +215,13 @@ Device::CreatePixelShader(const void* pShaderBytecode,
 		return E_POINTER;
 	}
 
+	// Se llama a la función de Direct3D para crear el sombreador.
 	HRESULT hr = m_device->CreatePixelShader(pShaderBytecode,
-		BytecodeLength,
-		pClassLinkage,
-		ppPixelShader);
+																					BytecodeLength,
+																					pClassLinkage,
+																					ppPixelShader);
 
+	// Se comprueba el resultado y se muestra un mensaje.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreatePixelShader",
 			"Pixel Shader created successfully!");
@@ -180,9 +234,14 @@ Device::CreatePixelShader(const void* pShaderBytecode,
 	return hr;
 }
 
+//
+// `CreateSamplerState` crea un estado de muestreo.
+// Los estados de muestreo controlan cómo se lee la información de las texturas (por ejemplo, cómo se filtra).
+//
 HRESULT
 Device::CreateSamplerState(const D3D11_SAMPLER_DESC* pSamplerDesc,
 	ID3D11SamplerState** ppSamplerState) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pSamplerDesc) {
 		ERROR("Device", "CreateSamplerState", "pSamplerDesc is nullptr");
 		return E_INVALIDARG;
@@ -192,8 +251,10 @@ Device::CreateSamplerState(const D3D11_SAMPLER_DESC* pSamplerDesc,
 		return E_POINTER;
 	}
 
+	// Se llama a la función de Direct3D para crear el estado de muestreo.
 	HRESULT hr = m_device->CreateSamplerState(pSamplerDesc, ppSamplerState);
 
+	// Se comprueba el resultado y se muestra un mensaje.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreateSamplerState",
 			"Sampler State created successfully!");
@@ -206,10 +267,15 @@ Device::CreateSamplerState(const D3D11_SAMPLER_DESC* pSamplerDesc,
 	return hr;
 }
 
+//
+// `CreateBuffer` crea un buffer en la memoria de la GPU.
+// Los buffers se usan para almacenar vértices, índices, constantes, y otros datos que necesita la GPU.
+//
 HRESULT
 Device::CreateBuffer(const D3D11_BUFFER_DESC* pDesc,
-	const D3D11_SUBRESOURCE_DATA* pInitialData,
-	ID3D11Buffer** ppBuffer) {
+										const D3D11_SUBRESOURCE_DATA* pInitialData,
+										ID3D11Buffer** ppBuffer) {
+	// Se valida que los punteros de entrada no sean nulos.
 	if (!pDesc) {
 		ERROR("Device", "CreateBuffer", "pDesc is nullptr");
 		return E_INVALIDARG;
@@ -219,8 +285,10 @@ Device::CreateBuffer(const D3D11_BUFFER_DESC* pDesc,
 		return E_POINTER;
 	}
 
+	// Se llama a la función de Direct3D para crear el buffer.
 	HRESULT hr = m_device->CreateBuffer(pDesc, pInitialData, ppBuffer);
 
+	// Se comprueba el resultado y se muestra un mensaje.
 	if (SUCCEEDED(hr)) {
 		MESSAGE("Device", "CreateBuffer",
 			"Buffer created successfully!");

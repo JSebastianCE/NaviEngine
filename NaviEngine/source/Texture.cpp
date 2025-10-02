@@ -2,21 +2,30 @@
 #include "Device.h"
 #include "DeviceContext.h"
 
+//
+// La primera función `init` está diseñada para cargar una textura desde un archivo,
+// pero su implementación actual está incompleta (`E_NOTIMPL`).
+//
 HRESULT
 Texture::init(Device& device,
-  const std::string& texturename,
-  ExtensionType extensionType) {
-  return E_NOTIMPL; 
+              const std::string& texturename,
+              ExtensionType extensionType) {
+              return E_NOTIMPL;
 }
 
+//
+// La segunda función `init` crea una textura vacía en la GPU con los parámetros especificados.
+// Esta textura puede usarse como un render target o un buffer de profundidad.
+//
 HRESULT
 Texture::init(Device& device,
-        unsigned int widht,
-        unsigned int height,
-        DXGI_FORMAT Format,
-        unsigned int BindFlags,
-        unsigned int sampleCount,
-        unsigned int qualityLevels) {
+              unsigned int widht,
+              unsigned int height,
+              DXGI_FORMAT Format,
+              unsigned int BindFlags,
+              unsigned int sampleCount,
+              unsigned int qualityLevels) {
+  // Se verifica que el dispositivo sea válido y que el ancho y alto no sean cero.
   if (!device.m_device) {
     ERROR("Texture", "init", "Device is null");
     return E_POINTER;
@@ -26,6 +35,10 @@ Texture::init(Device& device,
     return E_INVALIDARG;
   }
 
+  //
+  // Se configura la descripción de la textura 2D (`D3D11_TEXTURE2D_DESC`).
+  // Se especifican el ancho, el alto, el formato y las propiedades de uso (flags de enlace, etc.).
+  //
   D3D11_TEXTURE2D_DESC desc = {};
   desc.Width = widht;
   desc.Height = height;
@@ -39,8 +52,10 @@ Texture::init(Device& device,
   desc.CPUAccessFlags = 0;
   desc.MiscFlags = 0;
 
+  // Se crea la textura usando la función del dispositivo de Direct3D.
   HRESULT hr = device.CreateTexture2D(&desc, nullptr, &m_texture);
 
+  // Se verifica si la creación fue exitosa y se devuelve el resultado.
   if (FAILED(hr)) {
     ERROR("Texture", "init",
       ("Failed to create texture with specified params. HRESULT: " + std::to_string(hr)).c_str());
@@ -50,8 +65,13 @@ Texture::init(Device& device,
   return S_OK;
 }
 
+//
+// La tercera función `init` crea una vista de recurso de sombreador (`Shader Resource View`)
+// a partir de una textura existente. Esto permite que la textura sea utilizada por los sombreadores.
+//
 HRESULT
 Texture::init(Device& device, Texture& textureRef, DXGI_FORMAT format) {
+  // Se verifica que el dispositivo y la textura de referencia no sean nulos.
   if (!device.m_device) {
     ERROR("Texture", "init", "Device is null.");
     return E_POINTER;
@@ -61,47 +81,67 @@ Texture::init(Device& device, Texture& textureRef, DXGI_FORMAT format) {
     return E_POINTER;
   }
 
-  // Create Shader Resource View
+  //
+  // Se configura la descripción para la vista del recurso de sombreador.
+  // Se especifica el formato y la dimensión de la vista.
+  //
   D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.Format = format;
   srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
   srvDesc.Texture2D.MipLevels = 1;
   srvDesc.Texture2D.MostDetailedMip = 0;
 
+  // Se crea la vista de recurso de sombreador a partir de la textura de referencia.
   HRESULT hr = device.m_device->CreateShaderResourceView(textureRef.m_texture,
-    &srvDesc,
-    &m_textureFromImg);
+                                                          &srvDesc,
+                                                          &m_textureFromImg);
 
+  // Se verifica si la creación fue exitosa.
   if (FAILED(hr)) {
     ERROR("Texture", "init",
-      ("Failed to create shader resource view for texture. HRESULT: " + std::to_string(hr)).c_str());
+      ("Failed to create shader resource view for texture. HRESULT: " +
+        std::to_string(hr)).c_str());
     return hr;
   }
-
   return S_OK;
 }
 
+//
+// La función `update` está vacía, lo que sugiere que no hay lógica de actualización
+// de la textura en tiempo de ejecución en esta implementación.
+//
 void
 Texture::update() {
- 
 }
 
+//
+// La función `render` asigna la vista de recurso de sombreador al Pixel Shader.
+// Esto hace que la textura esté disponible para que el sombreador la lea y la use.
+//
 void
 Texture::render(DeviceContext& deviceContext,
-  unsigned int StartSlot,
-  unsigned int NumView) {
+                unsigned int StartSlot,
+                unsigned int NumView) {
+  // Se verifica que el contexto del dispositivo sea válido.
   if (!deviceContext.m_deviceContext) {
     ERROR("Texture", "render", "Device Context is null.");
     return;
   }
 
+  // Se asigna el recurso si la vista de recurso de sombreador es válida.
   if (m_textureFromImg) {
-    deviceContext.PSSetShaderResources(StartSlot, NumView, &m_textureFromImg);
+    deviceContext.PSSetShaderResources(StartSlot, 
+                                      NumView, 
+                                      &m_textureFromImg);
   }
 }
 
+//
+// La función `destroy` libera todos los recursos de Direct3D de la textura.
+//
 void
 Texture::destroy() {
+  // Se liberan las interfaces de forma segura.
   if (m_texture) {
     SAFE_RELEASE(m_texture);
   }
