@@ -111,3 +111,9 @@ ExtensionType {
   PNG = 1, /**< Textura en formato PNG (Portable Network Graphics). */
   JPG = 2  /**< Textura en formato JPG (Joint Photographic Experts Group). */
 };
+
+enum 
+ShaderType {
+  VERTEX_SHADER = 0,
+  PIXEL_SHADER = 1
+};

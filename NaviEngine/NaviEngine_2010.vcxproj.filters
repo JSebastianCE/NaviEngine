@@ -44,6 +44,15 @@
     <ClInclude Include="include\DepthStencilView.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\Viewport.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\InputLayout.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ShaderProgram.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">
@@ -81,6 +90,12 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\DepthStencilView.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Viewport.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\InputLayout.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
