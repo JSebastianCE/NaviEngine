@@ -34,8 +34,8 @@ public:
   destroy();
 
   HRESULT
-  CreateInputLayout(Device& devie, 
-                    std::vector<D3D10_INPUT_ELEMENT_DESC> Layout);
+  CreateInputLayout(Device& device, 
+                    std::vector<D3D11_INPUT_ELEMENT_DESC> Layout);
 
   HRESULT
   CreateShader(Device& device, ShaderType type);
