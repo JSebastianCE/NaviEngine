@@ -53,6 +53,12 @@
     <ClInclude Include="include\ShaderProgram.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\Buffer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MeshComponent.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">
@@ -99,6 +105,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\ShaderProgram.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Buffer.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
