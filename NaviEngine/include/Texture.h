@@ -55,7 +55,7 @@ public:
    */
   HRESULT
   init(Device& device,
-      unsigned int widht,
+      unsigned int width,
       unsigned int height,
       DXGI_FORMAT Format,
       unsigned int BindFlags,
@@ -89,7 +89,7 @@ public:
    * @param NumView Número de vistas de recurso de shader a asignar.
    */
   void
-  render(DeviceContext& deviceContext, unsigned int StartSlot, unsigned int NumView);
+  render(DeviceContext& deviceContext, unsigned int StartSlot, unsigned int NumViews);
 
   /**
    * @brief Libera los recursos asociados a la textura.
@@ -112,5 +112,5 @@ public:
   /**
    * @brief Nombre o ruta de la textura cargada.
    */
-  std::string m_rextureName;
+  std::string m_textureName;
 };

@@ -8,9 +8,56 @@
 //
 HRESULT
 Texture::init(Device& device,
-              const std::string& texturename,
+              const std::string& textureName,
               ExtensionType extensionType) {
-              return E_NOTIMPL;
+  //return E_NOTIMPL;
+  if (!device.m_device) {
+    ERROR("Texture", "init", "Device is null.");
+    return E_POINTER;
+  }
+  if (textureName.empty()) {
+    ERROR("Texture", "init", "Texture name cannot be empty.");
+    return E_INVALIDARG;
+  }
+
+  HRESULT hr = S_OK;
+
+  switch (extensionType) {
+  case DDS: {
+    m_textureName = textureName + ".dds";
+    // Cargar textura DDS
+    hr = D3DX11CreateShaderResourceViewFromFile(
+      device.m_device,
+      m_textureName.c_str(),
+      nullptr,
+      nullptr,
+      &m_textureFromImg,
+      nullptr
+    );
+
+    if (FAILED(hr)) {
+      ERROR("Texture", "init",
+        ("Failed to load DDS texture. Verify filepath: " + m_textureName).c_str());
+      return hr;
+    }
+    break;
+  }
+
+  case PNG: {
+
+    break;
+  }
+  case JPG: {
+
+    break;
+  }
+  default:
+    ERROR("Texture", "init", "Unsupported extension type");
+    return E_INVALIDARG;
+  }
+
+  return hr;
+
 }
 
 //
@@ -19,7 +66,7 @@ Texture::init(Device& device,
 //
 HRESULT
 Texture::init(Device& device,
-              unsigned int widht,
+              unsigned int width,
               unsigned int height,
               DXGI_FORMAT Format,
               unsigned int BindFlags,
@@ -30,7 +77,7 @@ Texture::init(Device& device,
     ERROR("Texture", "init", "Device is null");
     return E_POINTER;
   }
-  if (widht == 0 || height == 0) {
+  if (width == 0 || height == 0) {
     ERROR("Texture", "init", "Width and height must be greater than 0");
     return E_INVALIDARG;
   }
@@ -40,7 +87,7 @@ Texture::init(Device& device,
   // Se especifican el ancho, el alto, el formato y las propiedades de uso (flags de enlace, etc.).
   //
   D3D11_TEXTURE2D_DESC desc = {};
-  desc.Width = widht;
+  desc.Width = width;
   desc.Height = height;
   desc.MipLevels = 1;
   desc.ArraySize = 1;
@@ -121,7 +168,7 @@ Texture::update() {
 void
 Texture::render(DeviceContext& deviceContext,
                 unsigned int StartSlot,
-                unsigned int NumView) {
+                unsigned int NumViews) {
   // Se verifica que el contexto del dispositivo sea válido.
   if (!deviceContext.m_deviceContext) {
     ERROR("Texture", "render", "Device Context is null.");
@@ -131,7 +178,7 @@ Texture::render(DeviceContext& deviceContext,
   // Se asigna el recurso si la vista de recurso de sombreador es válida.
   if (m_textureFromImg) {
     deviceContext.PSSetShaderResources(StartSlot, 
-                                      NumView, 
+                                      NumViews, 
                                       &m_textureFromImg);
   }
 }
