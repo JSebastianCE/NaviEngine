@@ -65,6 +65,9 @@
     <ClInclude Include="include\BaseApp.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\ModelLoader.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">
@@ -120,6 +123,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\BaseApp.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ModelLoader.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

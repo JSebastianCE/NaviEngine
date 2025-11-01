@@ -3,8 +3,11 @@
 #include "Device.h"
 #include "DeviceContext.h"
 
-class Device;
-class DeviceContext;
+class
+Device;
+
+class
+DeviceContext;
 
 class 
 SamplerState {

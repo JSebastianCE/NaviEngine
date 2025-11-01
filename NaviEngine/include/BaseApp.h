@@ -13,30 +13,74 @@
 #include "Buffer.h"
 #include "SamplerState.h"
 
+/**
+ * @class BaseApp
+ * @brief Clase principal de la aplicación base del motor gráfico.
+ *        Se encarga de inicializar, actualizar, renderizar y destruir
+ *        todos los componentes necesarios para ejecutar una aplicación DirectX.
+ */
 class
 BaseApp {
 public:
 
+  /**
+   * @brief Constructor de BaseApp.
+   * @param hInst Instancia de la aplicación.
+   * @param nCmdShow Parámetro que indica cómo debe mostrarse la ventana.
+   */
   BaseApp(HINSTANCE hInst, int nCmdShow);
+
+  /**
+   * @brief Destructor de BaseApp.
+   *        Llama automáticamente al método destroy().
+   */
   ~BaseApp() { destroy(); }
 
-  int 
+  /**
+   * @brief Ejecuta el ciclo principal de la aplicación.
+   * @param hInst Instancia de la aplicación.
+   * @param nCmdShow Modo de visualización de la ventana.
+   * @return Código de salida de la aplicación.
+   */
+  int
   run(HINSTANCE hInst, int nCmdShow);
 
-  HRESULT 
+  /**
+   * @brief Inicializa todos los componentes principales del motor gráfico.
+   * @return HRESULT que indica el resultado de la inicialización.
+   */
+  HRESULT
   init();
 
+  /**
+   * @brief Actualiza el estado lógico de la aplicación.
+   * @param deltaTime Tiempo transcurrido desde el último frame (en segundos).
+   */
   void
   update(float deltaTime);
 
+  /**
+   * @brief Renderiza la escena en pantalla.
+   */
   void
   render();
 
+  /**
+   * @brief Libera todos los recursos y objetos utilizados por la aplicación.
+   */
   void
   destroy();
 
 private:
 
+  /**
+   * @brief Función de ventana (Window Procedure) que maneja los mensajes del sistema.
+   * @param hWnd Handle de la ventana.
+   * @param message Mensaje recibido.
+   * @param wParam Parámetro adicional del mensaje.
+   * @param lParam Parámetro adicional del mensaje.
+   * @return LRESULT con el resultado del procesamiento del mensaje.
+   */
   static LRESULT CALLBACK
   WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

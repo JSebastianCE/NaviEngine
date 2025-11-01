@@ -405,6 +405,7 @@
     <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\DeviceContext.cpp" />
     <ClCompile Include="source\InputLayout.cpp" />
+    <ClCompile Include="source\ModelLoader.cpp" />
     <ClCompile Include="source\RenderTargetView.cpp" />
     <ClCompile Include="source\SamplerState.cpp" />
     <ClCompile Include="source\ShaderProgram.cpp" />
@@ -424,6 +425,7 @@
     <ClInclude Include="include\DeviceContext.h" />
     <ClInclude Include="include\InputLayout.h" />
     <ClInclude Include="include\MeshComponent.h" />
+    <ClInclude Include="include\ModelLoader.h" />
     <ClInclude Include="include\Prerequisites.h" />
     <ClInclude Include="include\RenderTargetView.h" />
     <ClInclude Include="include\SamplerState.h" />
