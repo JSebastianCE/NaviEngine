@@ -1,46 +1,48 @@
 #include "ModelLoader.h"
 #include "OBJ_Loader.h"
 
-void 
+void
 ModelLoader::init()
 {
-
+  // Inicializa cualquier recurso necesario antes de cargar modelos.
 }
 
 void
 ModelLoader::update()
 {
-
+  // Actualiza el estado interno del cargador si es necesario.
 }
 
 void
 ModelLoader::render()
 {
-
+  // Renderiza el modelo cargado (si se implementa un render directo).
 }
 
-void 
+void
 ModelLoader::destroy()
 {
-
+  // Libera los recursos usados por el cargador o modelos cargados.
 }
 
-LoadData 
+LoadData
 ModelLoader::Load(std::string objFileName)
 {
-  LoadData LD;
-  objl::Loader m_loader;
+  LoadData LD;                       // Estructura donde se almacenarán los datos del modelo.
+  objl::Loader m_loader;              // Instancia temporal del cargador OBJ.
 
+  // Intenta cargar el archivo OBJ especificado.
   if (!m_loader.LoadFile(objFileName)) {
     ERROR("ModelLoader", "Load", "No se pudo cargar el archivo .obj");
-    return LD; 
+    return LD;                       // Retorna estructura vacía si la carga falla.
   }
 
-  LD.name = objFileName;
+  LD.name = objFileName;              // Guarda el nombre del modelo cargado.
 
-  size_t vertexCount = m_loader.LoadedVertices.size();
-  LD.vertex.resize(vertexCount);
+  size_t vertexCount = m_loader.LoadedVertices.size();  // Número total de vértices cargados.
+  LD.vertex.resize(vertexCount);      // Redimensiona el vector de vértices.
 
+  // Recorre todos los vértices cargados y copia su información.
   for (int i = 0; i < LD.vertex.size(); i++)
   {
     LD.vertex[i].Pos.x = m_loader.LoadedVertices[i].Position.X;
@@ -55,12 +57,12 @@ ModelLoader::Load(std::string objFileName)
     LD.vertex[i].Normal.z = m_loader.LoadedVertices[i].Normal.Z;
   }
 
-  size_t indexCount = m_loader.LoadedIndices.size();
-  LD.index.resize(indexCount);
-  LD.index = m_loader.LoadedIndices;
+  size_t indexCount = m_loader.LoadedIndices.size();   // Número total de índices cargados.
+  LD.index.resize(indexCount);                         // Redimensiona el vector de índices.
+  LD.index = m_loader.LoadedIndices;                   // Copia los índices cargados.
 
-  LD.numVertex = (int)vertexCount;
-  LD.numIndex = (int)indexCount;
+  LD.numVertex = (int)vertexCount;                     // Guarda la cantidad de vértices.
+  LD.numIndex = (int)indexCount;                       // Guarda la cantidad de índices.
 
-  return LD; 
+  return LD;                                           // Retorna la estructura con los datos del modelo cargado.
 }
