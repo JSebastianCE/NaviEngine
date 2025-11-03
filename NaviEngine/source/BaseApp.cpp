@@ -102,7 +102,7 @@ BaseApp::init() {
   position.SemanticIndex = 0;
   position.Format = DXGI_FORMAT_R32G32B32_FLOAT;
   position.InputSlot = 0;
-  position.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT /*0*/;
+  position.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
   position.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
   position.InstanceDataStepRate = 0;
   Layout.push_back(position);
@@ -112,15 +112,22 @@ BaseApp::init() {
   texcoord.SemanticIndex = 0;
   texcoord.Format = DXGI_FORMAT_R32G32_FLOAT;
   texcoord.InputSlot = 0;
-  texcoord.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT /*0*/;
+  texcoord.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
   texcoord.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
   texcoord.InstanceDataStepRate = 0;
   Layout.push_back(texcoord);
 
+  D3D11_INPUT_ELEMENT_DESC normal;
+  normal.SemanticName = "NORMAL";
+  normal.SemanticIndex = 0;
+  normal.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+  normal.InputSlot = 0;
+  normal.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+  normal.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+  normal.InstanceDataStepRate = 0;
+  Layout.push_back(normal);
 
   //Creacion de ShaderProgram
-
-  //Create the Shader program
   hr = m_shaderProgram.init(m_device, "NaviEngine.fx", Layout);
   if (FAILED(hr)) {
     ERROR("Main", "InitDevice",
@@ -132,7 +139,7 @@ BaseApp::init() {
   //ESTO ES TEMPORAL
 
   // Create vertex buffer
-  SimpleVertex vertices[] =
+  /*SimpleVertex vertices[] =
   {
       { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
       { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
@@ -197,7 +204,31 @@ BaseApp::init() {
     m_mesh.m_index.push_back(indices[i]);
   }
   m_mesh.m_numIndex = 36;
+  */
+  
+  //Load Model
+  LD = m_modelLoader.Load("Assets/Link.obj");
 
+  if (LD.vertex.empty() || LD.index.empty()) {
+    ERROR("BaseApp", "init", "Fallo al cargar el modelo 'Assets/NAME.obj'");
+    return E_FAIL;
+  }
+
+  //Limpiar mesh
+  m_mesh.m_vertex.clear();
+  m_mesh.m_index.clear();
+
+  // Copiar los vértices de LD a m_mesh
+  for (const auto& vertex : LD.vertex) {
+    m_mesh.m_vertex.push_back(vertex);
+  }
+
+  // Copiar los índices de LD a m_mesh
+  m_mesh.m_index = LD.index;
+
+  // Actualizar los contadores en m_mesh
+  m_mesh.m_numVertex = m_mesh.m_vertex.size();
+  m_mesh.m_numIndex = m_mesh.m_index.size();
 
   //La creacion del Vertex Buffer
   // Create vertex buffer

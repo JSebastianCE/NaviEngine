@@ -13,6 +13,8 @@
 #include "Buffer.h"
 #include "SamplerState.h"
 
+#include "ModelLoader.h"
+
 /**
  * @class BaseApp
  * @brief Clase principal de la aplicación base del motor gráfico.
@@ -103,6 +105,9 @@ private:
   Buffer															m_cbChangesEveryFrame;
   Texture 														m_textureCube;
   SamplerState                        m_samplerState;
+
+  ModelLoader                         m_modelLoader;
+  LoadData                            LD;
 
   XMMATRIX                            m_World;
   XMMATRIX                            m_View;
