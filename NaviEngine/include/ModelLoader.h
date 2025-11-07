@@ -1,6 +1,5 @@
 #pragma once
 #include "Prerequisites.h"
-//#include "OBJ_Loader.h"
 
 /**
  * @class ModelLoader

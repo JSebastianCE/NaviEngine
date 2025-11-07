@@ -71,6 +71,9 @@
     <ClInclude Include="include\OBJ_Loader.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\ParserOBJ.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">
@@ -129,6 +132,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\ModelLoader.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ParserOBJ.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

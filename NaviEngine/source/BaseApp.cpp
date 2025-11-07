@@ -138,76 +138,9 @@ BaseApp::init() {
   //Definir la Gemotria. En esta caso en el Main era un cubo
   //ESTO ES TEMPORAL
 
-  // Create vertex buffer
-  /*SimpleVertex vertices[] =
-  {
-      { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-      { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-      { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-      { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-
-      { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-      { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-      { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-      { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-
-      { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-      { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-      { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-      { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-
-      { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-      { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-      { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-      { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-
-      { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-      { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-      { XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-      { XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-
-      { XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
-      { XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
-      { XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
-      { XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
-  };
-
-  unsigned int indices[] =
-  {
-      3,1,0,
-      2,1,3,
-
-      6,4,5,
-      7,4,6,
-
-      11,9,8,
-      10,9,11,
-
-      14,12,13,
-      15,12,14,
-
-      19,17,16,
-      18,17,19,
-
-      22,20,21,
-      23,20,22
-  };
-
-  // Integrar los vertices a meshcomponent
-  for (unsigned int i = 0; i < 24; i++) {
-    m_mesh.m_vertex.push_back(vertices[i]);
-  }
-  m_mesh.m_numVertex = 24;
-
-  // Integrar los indices a meshcomponent
-  for (unsigned int i = 0; i < 36; i++) {
-    m_mesh.m_index.push_back(indices[i]);
-  }
-  m_mesh.m_numIndex = 36;
-  */
   
   //Load Model
-  LD = m_modelLoader.Load("Assets/Link.obj");
+  LD = m_modelLoader.Load("Assets/Duck.obj");
 
   if (LD.vertex.empty() || LD.index.empty()) {
     ERROR("BaseApp", "init", "Fallo al cargar el modelo 'Assets/NAME.obj'");
@@ -225,6 +158,8 @@ BaseApp::init() {
 
   // Copiar los índices de LD a m_mesh
   m_mesh.m_index = LD.index;
+  
+
 
   // Actualizar los contadores en m_mesh
   m_mesh.m_numVertex = m_mesh.m_vertex.size();
@@ -272,7 +207,8 @@ BaseApp::init() {
   }
 
   // Load the Texture
-  hr = m_textureCube.init(m_device, "seafloor", ExtensionType::DDS);
+  //hr = m_textureCube.init(m_device, "seafloor", ExtensionType::DDS);
+  hr = m_textureCube.init(m_device, "Assets/DuckTexture", ExtensionType::DDS);
   if (FAILED(hr)) {
     ERROR("Main", "InitDevice",
       ("Failed to initialize texture Cube. HRESULT: " + std::to_string(hr)).c_str());
@@ -335,7 +271,23 @@ BaseApp::update(float deltaTime) {
   m_vMeshColor.z = (sinf(t * 5.0f) + 1.0f) * 0.5f;
 
   // Rotate cube around the origin
-  m_World = XMMatrixRotationY(t);
+  //m_World = XMMatrixRotationY(t);
+
+  // 1.0f = tamaño original
+  // 0.5f = mitad de tamaño
+  // 2.0f = doble de tamaño
+  float escala = 5.0f;
+
+  // Crea una matriz de escalado
+  XMMATRIX matrixEscalado = XMMatrixScaling(escala, escala, escala);
+
+  //Tu rotación original
+  XMMATRIX matrixRotacion = XMMatrixRotationY(t);
+
+  // Combina las transformaciones: PRIMERO escala, LUEGO rota.
+  // El orden de multiplicación importa.
+  m_World = matrixEscalado * matrixRotacion;
+
   cb.mWorld = XMMatrixTranspose(m_World);
   cb.vMeshColor = m_vMeshColor;
   m_cbChangesEveryFrame.update(m_deviceContext, nullptr, 0, nullptr, &cb, 0, 0);

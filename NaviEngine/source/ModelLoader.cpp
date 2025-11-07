@@ -1,5 +1,5 @@
 #include "ModelLoader.h"
-#include "OBJ_Loader.h"
+#include "ParserOBJ.h"
 
 void
 ModelLoader::init()
