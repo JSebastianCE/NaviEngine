@@ -282,7 +282,14 @@ BaseApp::update(float deltaTime) {
   XMMATRIX matrixEscalado = XMMatrixScaling(escala, escala, escala);
 
   //Tu rotación original
-  XMMATRIX matrixRotacion = XMMatrixRotationY(t);
+  //XMMATRIX matrixRotacion = XMMatrixRotationY(t);
+
+  float pitch = 4.8f;       // Inclinación arriba/abajo (eje X)
+  float yaw = t;            // Giro izquierda/derecha (eje Y) 
+  float roll = 0.0f;        // Rodar de lado (eje Z)
+
+  // Crea la matriz de rotación combinada
+  XMMATRIX matrixRotacion = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
 
   // Combina las transformaciones: PRIMERO escala, LUEGO rota.
   // El orden de multiplicación importa.
