@@ -266,9 +266,13 @@ BaseApp::update(float deltaTime) {
   m_cbChangeOnResize.update(m_deviceContext, nullptr, 0, nullptr, &cbChangesOnResize, 0, 0);
 
   // Modify the color
-  m_vMeshColor.x = (sinf(t * 1.0f) + 1.0f) * 0.5f;
-  m_vMeshColor.y = (cosf(t * 3.0f) + 1.0f) * 0.5f;
-  m_vMeshColor.z = (sinf(t * 5.0f) + 1.0f) * 0.5f;
+  //m_vMeshColor.x = (sinf(t * 1.0f) + 1.0f) * 0.5f;
+  //m_vMeshColor.y = (cosf(t * 3.0f) + 1.0f) * 0.5f;
+  //m_vMeshColor.z = (sinf(t * 5.0f) + 1.0f) * 0.5f;
+
+  m_vMeshColor.x = 1.0f;
+  m_vMeshColor.y = 1.0f;
+  m_vMeshColor.z = 1.0f;
 
   // Rotate cube around the origin
   //m_World = XMMatrixRotationY(t);

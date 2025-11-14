@@ -74,6 +74,9 @@
     <ClInclude Include="include\ParserOBJ.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\stb_image.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">
