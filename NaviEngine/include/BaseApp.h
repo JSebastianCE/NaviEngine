@@ -14,6 +14,7 @@
 #include "SamplerState.h"
 
 #include "ModelLoader.h"
+#include "Model3D.h"
 
 /**
  * @class BaseApp
@@ -97,7 +98,7 @@ private:
   DepthStencilView                    m_depthStencilView;
   Viewport                            m_viewport;
   ShaderProgram                       m_shaderProgram;
-  MeshComponent												m_mesh;
+  //MeshComponent												m_mesh;
   Buffer															m_vertexBuffer;
   Buffer															m_indexBuffer;
   Buffer															m_cbNeverChanges;
@@ -113,6 +114,9 @@ private:
   XMMATRIX                            m_View;
   XMMATRIX                            m_Projection;
   XMFLOAT4                            m_vMeshColor; // (0.7f, 0.7f, 0.7f, 1.0f);
+
+  std::vector<MeshComponent> MeshRex;
+  Model3D*                            m_model;
 
   CBChangeOnResize cbChangesOnResize;
   CBNeverChanges cbNeverChanges;

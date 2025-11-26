@@ -18,6 +18,15 @@
     <Filter Include="include">
       <UniqueIdentifier>{454f90a2-a528-4d59-b249-12370adf2602}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Patterns">
+      <UniqueIdentifier>{b719e2e8-e72b-410a-bfdd-22369983f6e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Utilities">
+      <UniqueIdentifier>{a112894c-ffe7-4f0f-af02-c9351591bb92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\ECS">
+      <UniqueIdentifier>{f4fb7d7e-695a-4506-86f4-4da8dd0b8896}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Window.h">
@@ -76,6 +85,21 @@
     </ClInclude>
     <ClInclude Include="include\stb_image.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\IResource.h">
+      <Filter>include\Patterns</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Model3D.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ResourceManager.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Component.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ECS\Entity.h">
+      <Filter>include\ECS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +162,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\ParserOBJ.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Model3D.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

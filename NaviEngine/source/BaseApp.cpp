@@ -1,4 +1,6 @@
 #include "BaseApp.h"
+#include "ResourceManager.h"
+
 
 BaseApp::BaseApp(HINSTANCE hInst, int nCmdShow) {
 
@@ -135,10 +137,14 @@ BaseApp::init() {
     return hr;
   }
 
+  m_model = new Model3D("Assets/Mococo_pose.fbx", ModelType::FBX);
+  MeshRex = m_model->GetMeshes();
+
+
   //Definir la Gemotria. En esta caso en el Main era un cubo
   //ESTO ES TEMPORAL
 
-  
+  /*
   //Load Model
   LD = m_modelLoader.Load("Assets/Duck.obj");
 
@@ -165,20 +171,37 @@ BaseApp::init() {
   m_mesh.m_numVertex = m_mesh.m_vertex.size();
   m_mesh.m_numIndex = m_mesh.m_index.size();
 
+  */
+
+
   //La creacion del Vertex Buffer
   // Create vertex buffer
-  hr = m_vertexBuffer.init(m_device, m_mesh, D3D11_BIND_VERTEX_BUFFER);
+  hr = m_vertexBuffer.init(m_device, MeshRex[0], D3D11_BIND_VERTEX_BUFFER);
   if (FAILED(hr)) {
     ERROR("BaseApp", "init", "Failed to initialize VertexBuffer.");
     return hr;
   }
 
   //Creacion del IndexBuffer
-  hr = m_indexBuffer.init(m_device, m_mesh, D3D11_BIND_INDEX_BUFFER);
+  hr = m_indexBuffer.init(m_device, MeshRex[0], D3D11_BIND_INDEX_BUFFER);
   if (FAILED(hr)) {
     ERROR("BaseApp", "init", "Failed to initialize IndexBuffer.");
     return hr;
   }
+
+
+
+
+
+
+  auto& resourceMan = ResourceManager::getInstance();
+
+  std::shared_ptr<Model3D> model = resourceMan.GetOrLoad<Model3D>("CubeModel", "Mococo_pose.fbx", ModelType::FBX);
+
+
+
+
+
 
   //Set Primitive Topology
   m_deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -206,6 +229,9 @@ BaseApp::init() {
     return hr;
   }
 
+
+
+
   // Load the Texture
   //hr = m_textureCube.init(m_device, "seafloor", ExtensionType::DDS);
   hr = m_textureCube.init(m_device, "Assets/DuckTexture", ExtensionType::DDS);
@@ -214,6 +240,8 @@ BaseApp::init() {
       ("Failed to initialize texture Cube. HRESULT: " + std::to_string(hr)).c_str());
     return hr;
   }
+
+
 
   // Create the sample state
   hr = m_samplerState.init(m_device);
@@ -226,7 +254,7 @@ BaseApp::init() {
   m_World = XMMatrixIdentity();
 
   // Initialize the view matrix
-  XMVECTOR Eye = XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f);
+  XMVECTOR Eye = XMVectorSet(0.0f, 18.0f, -18.0f, 0.0f);
   XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
   XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
   m_View = XMMatrixLookAtLH(Eye, At, Up);
@@ -280,7 +308,7 @@ BaseApp::update(float deltaTime) {
   // 1.0f = tamaño original
   // 0.5f = mitad de tamaño
   // 2.0f = doble de tamaño
-  float escala = 5.0f;
+  float escala = 1.0f;
 
   // Crea una matriz de escalado
   XMMATRIX matrixEscalado = XMMatrixScaling(escala, escala, escala);
@@ -288,7 +316,7 @@ BaseApp::update(float deltaTime) {
   //Tu rotación original
   //XMMATRIX matrixRotacion = XMMatrixRotationY(t);
 
-  float pitch = 4.8f;       // Inclinación arriba/abajo (eje X)
+  float pitch = 0.0f;       // Inclinación arriba/abajo (eje X)
   float yaw = t;            // Giro izquierda/derecha (eje Y) 
   float roll = 0.0f;        // Rodar de lado (eje Z)
 
@@ -338,7 +366,7 @@ BaseApp::render() {
   // Asignar textura y sampler
   m_textureCube.render(m_deviceContext, 0, 1);
   m_samplerState.render(m_deviceContext, 0, 1);
-  m_deviceContext.DrawIndexed(m_mesh.m_numIndex, 0, 0);
+  m_deviceContext.DrawIndexed(MeshRex[0].m_numIndex, 0, 0);
 
   //
   // Present our back buffer to our front buffer

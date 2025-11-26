@@ -1,5 +1,6 @@
 #pragma once
 #include "Prerequisites.h"
+#include "fbxsdk.h"
 
 /**
  * @class ModelLoader
@@ -7,8 +8,7 @@
  *        y destrucción de modelos 3D, permitiendo importar datos desde archivos externos.
  */
 class
-ModelLoader
-{
+ModelLoader{
 public:
 
   /**
@@ -54,6 +54,11 @@ public:
   Load(std::string objFileName);
 
 private:
-  /** @brief Cargador OBJ (comentado actualmente, podría usarse para importar modelos). */
-  //objl::Loader m_loader;
+  FbxManager* lSdkManager;
+  FbxScene* lScene;
+  std::vector<std::string > textureFileName;
+public:
+  std::string modelName;
+ 
 };
+
