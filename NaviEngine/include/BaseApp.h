@@ -16,6 +16,14 @@
 #include "ModelLoader.h"
 #include "Model3D.h"
 
+#include "UserInterface.h"
+
+#include "ECS/Actor.h"
+
+//#include "Transform.h"
+
+
+
 /**
  * @class BaseApp
  * @brief Clase principal de la aplicación base del motor gráfico.
@@ -116,9 +124,14 @@ private:
   XMFLOAT4                            m_vMeshColor; // (0.7f, 0.7f, 0.7f, 1.0f);
 
   std::vector<MeshComponent> MeshRex;
+
   Model3D*                            m_model;
 
   CBChangeOnResize cbChangesOnResize;
   CBNeverChanges cbNeverChanges;
   CBChangesEveryFrame cb;
+
+  UserInterface UI;
+
+  LRESULT CALLBACK WnProc(HWND, UINT, WPARAM, LPARAM);
 };

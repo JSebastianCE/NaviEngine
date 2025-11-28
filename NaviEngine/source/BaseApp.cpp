@@ -1,13 +1,14 @@
 #include "BaseApp.h"
 #include "ResourceManager.h"
 
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 BaseApp::BaseApp(HINSTANCE hInst, int nCmdShow) {
 
 }
   
 
-//El wWinMain creado, pero con un meodo de clase
+//El wWinMain creado, pero con un metodo de clase
 int
 BaseApp::run(HINSTANCE hInst, int nCmdShow) {
   if (FAILED(m_window.init(hInst, nCmdShow, WndProc))) {
@@ -94,6 +95,12 @@ BaseApp::init() {
     ERROR("BaseApp", "init", "Failed to initialize Viewport.");
     return hr;
   }
+
+
+ 
+
+
+
 
   //Definicion de InputLayout
 
@@ -189,22 +196,14 @@ BaseApp::init() {
     return hr;
   }
 
+  //auto& resourceMan = ResourceManager::getInstance();
 
 
-
-
-
-  auto& resourceMan = ResourceManager::getInstance();
-
-  std::shared_ptr<Model3D> model = resourceMan.GetOrLoad<Model3D>("CubeModel", "Mococo_pose.fbx", ModelType::FBX);
-
-
-
-
+  //std::shared_ptr<Model3D> model = resourceMan.GetOrLoad<Model3D>("CubeModel", "Mococo_pose.fbx", ModelType::FBX);
 
 
   //Set Primitive Topology
-  m_deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  //m_deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 
   // Create the constant buffers
@@ -234,7 +233,7 @@ BaseApp::init() {
 
   // Load the Texture
   //hr = m_textureCube.init(m_device, "seafloor", ExtensionType::DDS);
-  hr = m_textureCube.init(m_device, "Assets/DuckTexture", ExtensionType::DDS);
+  hr = m_textureCube.init(m_device, "Assets/accessories_Base_color", ExtensionType::PNG);
   if (FAILED(hr)) {
     ERROR("Main", "InitDevice",
       ("Failed to initialize texture Cube. HRESULT: " + std::to_string(hr)).c_str());
@@ -265,11 +264,25 @@ BaseApp::init() {
   m_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_window.m_width / (FLOAT)m_window.m_height, 0.01f, 100.0f);
   cbChangesOnResize.mProjection = XMMatrixTranspose(m_Projection);
 
+  UI.init(
+    m_window.m_hWnd,                 
+    m_device.m_device,               
+    m_deviceContext.m_deviceContext  
+  );
+
+
   return S_OK;
 }
 
 void 
 BaseApp::update(float deltaTime) {
+
+  UI.update();
+
+  ImGui::Begin("Test");
+
+  ImGui::End();
+
 
   // Update our time
   static float t = 0.0f;
@@ -368,6 +381,11 @@ BaseApp::render() {
   m_samplerState.render(m_deviceContext, 0, 1);
   m_deviceContext.DrawIndexed(MeshRex[0].m_numIndex, 0, 0);
 
+  // Set primitive topology
+  m_deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+
+  UI.render();
   //
   // Present our back buffer to our front buffer
   //
@@ -394,12 +412,16 @@ BaseApp::destroy() {
   m_backBuffer.destroy();
   m_deviceContext.destroy();
   m_device.destroy();
+
+  UI.destroy();
 }
 
 LRESULT
 BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-  //if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-  //  return true;
+
+  if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+  return true;
+
   switch (message)
   {
   case WM_CREATE:

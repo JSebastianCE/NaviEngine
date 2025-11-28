@@ -1,25 +1,29 @@
 #pragma once
-/*
 #include "Prerequisites.h"
-class
-  DeviceContext;
+
+class 
+DeviceContext;
 
 class
-  Component
-{
+  Component {
 public:
+
   Component() = default;
 
+ 
   Component(const ComponentType type) : m_type(type) {}
 
+ 
   virtual
     ~Component() = default;
 
   virtual void
     init() = 0;
 
+  
   virtual void
     update(float deltaTime) = 0;
+
 
   virtual void
     render(DeviceContext& deviceContext) = 0;
@@ -31,5 +35,5 @@ public:
     getType() const { return m_type; }
 
 protected:
-  ComponentType m_type; ///< Tipo del componente.
+  ComponentType m_type; 
 };

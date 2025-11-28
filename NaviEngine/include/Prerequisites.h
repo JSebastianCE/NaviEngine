@@ -19,7 +19,13 @@
 #include "resource.h"
 
 
-//third Party Libraries
+//Third Party Libraries
+#include "EngineUtilities/Vectors/Vector2.h"
+#include "EngineUtilities/Vectors/Vector3.h"
+#include "EngineUtilities\Memory\TSharedPointer.h"
+#include "EngineUtilities\Memory\TWeakPointer.h"
+#include "EngineUtilities\Memory\TStaticPtr.h"
+#include "EngineUtilities\Memory\TUniquePtr.h"
 
 // MACROS
 
@@ -129,4 +135,12 @@ enum
 ShaderType {
   VERTEX_SHADER = 0,
   PIXEL_SHADER = 1
+};
+
+enum
+  ComponentType {
+  NONE = 0,    
+  TRANSFORM = 1,
+  MESH = 2,     
+  MATERIAL = 3
 };
