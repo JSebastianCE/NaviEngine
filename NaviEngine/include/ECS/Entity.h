@@ -30,7 +30,7 @@ public:
 
   template <typename T> void
     addComponent(EU::TSharedPointer<T> component) {
-    //static_assert(std::is_base_of<Component, T>::value, "T must be derived from Component");
+    static_assert(std::is_base_of<Component, T>::value, "T must be derived from Component");
     m_components.push_back(component.template dynamic_pointer_cast<Component>());
   }
   

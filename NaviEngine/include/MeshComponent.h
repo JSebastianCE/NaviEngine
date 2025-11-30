@@ -1,5 +1,7 @@
 #pragma once
 #include "Prerequisites.h"
+#include "ECS\Component.h"
+
 
 /**
  * @brief Declaración adelantada de la clase DeviceContext.
@@ -14,15 +16,16 @@ DeviceContext;
  *        actualización y renderizado.
  */
 class
-MeshComponent {
+MeshComponent: 
+public 
+Component{
 public:
 
   /**
    * @brief Constructor por defecto de MeshComponent.
    *        Inicializa el número de vértices e índices en cero.
    */
-  MeshComponent() : m_numVertex(0), m_numIndex(0) {}
-
+  MeshComponent() : m_numVertex(0), m_numIndex(0), Component(ComponentType::MESH) {}
   /**
    * @brief Destructor virtual por defecto.
    */
@@ -33,27 +36,27 @@ public:
    * @brief Inicializa los recursos o configuraciones necesarias de la malla.
    */
   void
-  init();
+  init() override {};
 
   /**
    * @brief Actualiza el estado de la malla según el tiempo transcurrido.
    * @param deltaTime Tiempo en segundos desde el último frame.
    */
   void
-  update(float deltaTime);
+  update(float deltaTime) override {};
 
   /**
    * @brief Renderiza la malla utilizando el contexto del dispositivo.
    * @param deviceContext Contexto del dispositivo utilizado para dibujar.
    */
   void
-  render(DeviceContext& deviceContext);
+  render(DeviceContext& deviceContext) override {};
 
   /**
    * @brief Libera los recursos asociados a la malla.
    */
   void
-  desrtroy();
+    destroy() override {};
 
 public:
 

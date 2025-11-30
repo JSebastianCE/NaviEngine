@@ -31,7 +31,8 @@ Actor::Actor(Device& device) {
   //m_LightPos = XMFLOAT4(2.0f, 4.0f, -2.0f, 1.0f);
 }
 
-void Actor::update(float deltaTime, DeviceContext& deviceContext) {
+void 
+Actor::update(float deltaTime, DeviceContext& deviceContext) {
   // Update all components
   for (auto& component : m_components) {
     if (component) {
@@ -43,11 +44,14 @@ void Actor::update(float deltaTime, DeviceContext& deviceContext) {
   // Requiere #include "Transform.h" arriba
   m_model.mWorld = XMMatrixTranspose(getComponent<Transform>()->matrix);
 
+  m_model.vMeshColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
   // Update the constant buffer
   m_modelBuffer.update(deviceContext, nullptr, 0, nullptr, &m_model, 0, 0);
 }
 
-void Actor::render(DeviceContext& deviceContext) {
+void 
+Actor::render(DeviceContext& deviceContext) {
   // 1) Proyectar sombra primero (sobre el suelo)
   //if (canCastShadow()) {
   //    renderShadow(deviceContext);
@@ -64,13 +68,13 @@ void Actor::render(DeviceContext& deviceContext) {
     m_indexBuffers[i].render(deviceContext, 0, 1, false, DXGI_FORMAT_R32_UINT);
 
     // Bind del CB “normal” (world + color)
-    m_modelBuffer.render(deviceContext, 1, 1, true);
+    m_modelBuffer.render(deviceContext, 2, 1, true);
 
     // Render mesh texture
     // LÓGICA DEL PROFESOR (PBR): Solo renderiza si tienes el set completo de 5 texturas
     if (m_textures.size() > 0) {
       if (i < m_textures.size()) {
-        if (m_textures.size() >= 5) {
+        if (m_textures.size() >= 1) {
           m_textures[0].render(deviceContext, 0, 1); // Albedo -> t0
           //m_textures[1].render(deviceContext, 1, 1); // Normal -> t1
           // ... etc
@@ -81,7 +85,8 @@ void Actor::render(DeviceContext& deviceContext) {
   }
 }
 
-void Actor::destroy() {
+void 
+Actor::destroy() {
   for (auto& vertexBuffer : m_vertexBuffers) {
     vertexBuffer.destroy();
   }
@@ -100,7 +105,8 @@ void Actor::destroy() {
   m_sampler.destroy();
 }
 
-void Actor::setMesh(Device& device, std::vector<MeshComponent> meshes) {
+void 
+Actor::setMesh(Device& device, std::vector<MeshComponent> meshes) {
   // NOTA IMPORTANTE: En el script de tu profesor esto salía vacío.
   // Pero necesitas este código para crear los VertexBuffers, si no, no se ve nada.
 
