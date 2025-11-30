@@ -127,10 +127,13 @@ BaseApp::init() {
     m_cyberGun->setName("CyberGun");
     m_actors.push_back(m_cyberGun);
 
-    m_cyberGun->getComponent<Transform>()->setTransform(EU::Vector3(2.0f, -4.90f, 11.60f),
-      EU::Vector3(-0.60f, 3.0f, -0.20f),
-      EU::Vector3(1.0f, 1.0f, 1.0f));
-  }
+    m_cyberGun->getComponent<Transform>()->setTransform(
+      EU::Vector3(0.0f, 0.0f, 0.0f), // Posición
+      EU::Vector3(0.0f, 0.0f, 0.0f), // Rotación
+      EU::Vector3(1.0f, 1.0f, 1.0f)  // Escala
+    ); 
+
+  } 
   else {
     ERROR("Main", "InitDevice", "Failed to create cyber Gun Actor.");
     return E_FAIL;
@@ -259,6 +262,40 @@ void BaseApp::update(float deltaTime)
   UI.update();
   ImGui::Begin("Test");
   ImGui::End();
+
+  // NUEVA VENTANA TRANSFORM
+  ImGui::Begin("Transform");
+
+  if (!m_cyberGun.isNull()) {
+    // Obtenemos el componente Transform del actor
+    auto transform = m_cyberGun->getComponent<Transform>();
+
+    if (transform) {
+      //  POSITION 
+      EU::Vector3 pos = transform->getPosition();
+      float fPos[3] = { pos.x, pos.y, pos.z };
+      // Si el usuario mueve los valores (DragFloat3 devuelve true), actualizamos el transform
+      if (ImGui::DragFloat3("Position", fPos, 0.01f)) {
+        transform->setPosition(EU::Vector3(fPos[0], fPos[1], fPos[2]));
+      }
+
+      //  ROTATION 
+      EU::Vector3 rot = transform->getRotation();
+      float fRot[3] = { rot.x, rot.y, rot.z };
+      if (ImGui::DragFloat3("Rotation", fRot, 0.01f)) {
+        transform->setRotation(EU::Vector3(fRot[0], fRot[1], fRot[2]));
+      }
+
+      //  SCALE
+      EU::Vector3 sca = transform->getScale();
+      float fSca[3] = { sca.x, sca.y, sca.z };
+      if (ImGui::DragFloat3("Scale", fSca, 0.01f)) {
+        transform->setScale(EU::Vector3(fSca[0], fSca[1], fSca[2]));
+      }
+    }
+  }
+  ImGui::End();
+
 
   // Update our time
   static float t = 0.0f;
