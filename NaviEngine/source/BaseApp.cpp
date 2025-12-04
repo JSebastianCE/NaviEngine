@@ -107,12 +107,12 @@ BaseApp::init() {
     // Crear vertex buffer y index buffer para el modelo
     std::vector<MeshComponent> cyberGunMeshes;
     // RUTA DE MODELO
-    m_model = new Model3D("Assets/Mococo_pose.fbx", ModelType::FBX);
+    m_model = new Model3D("Assets/SF_Golden_double_axe_.fbx", ModelType::FBX);
     cyberGunMeshes = m_model->GetMeshes();
 
     std::vector<Texture> cyberGunTextures;
     // RUTA DE TEXTURA
-    hr = m_cyberGunAlbedo.init(m_device, "Assets/accessories_Base_color", ExtensionType::PNG);
+    hr = m_cyberGunAlbedo.init(m_device, "Assets/T_Golden_double_Axe_D", ExtensionType::JPG);
 
     // Load the Texture
     if (FAILED(hr)) {
@@ -128,9 +128,9 @@ BaseApp::init() {
     m_actors.push_back(m_cyberGun);
 
     m_cyberGun->getComponent<Transform>()->setTransform(
-      EU::Vector3(0.0f, 0.0f, 0.0f), // Posición
-      EU::Vector3(0.0f, 0.0f, 0.0f), // Rotación
-      EU::Vector3(1.0f, 1.0f, 1.0f)  // Escala
+      EU::Vector3(0.19f, -15.80f, 12.86f), // Posición
+      EU::Vector3(-1.0f, 0.0f, 0.0f), // Rotación
+      EU::Vector3(0.30f, 0.30f, 0.3f)  // Escala
     ); 
 
   } 
