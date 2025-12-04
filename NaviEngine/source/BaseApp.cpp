@@ -267,31 +267,29 @@ void BaseApp::update(float deltaTime)
   ImGui::Begin("Transform");
 
   if (!m_cyberGun.isNull()) {
-    // Obtenemos el componente Transform del actor
     auto transform = m_cyberGun->getComponent<Transform>();
 
     if (transform) {
-      //  POSITION 
+      // Obtenemos los valores actuales
       EU::Vector3 pos = transform->getPosition();
       float fPos[3] = { pos.x, pos.y, pos.z };
-      // Si el usuario mueve los valores (DragFloat3 devuelve true), actualizamos el transform
-      if (ImGui::DragFloat3("Position", fPos, 0.01f)) {
-        transform->setPosition(EU::Vector3(fPos[0], fPos[1], fPos[2]));
-      }
 
-      //  ROTATION 
       EU::Vector3 rot = transform->getRotation();
       float fRot[3] = { rot.x, rot.y, rot.z };
-      if (ImGui::DragFloat3("Rotation", fRot, 0.01f)) {
-        transform->setRotation(EU::Vector3(fRot[0], fRot[1], fRot[2]));
-      }
 
-      //  SCALE
       EU::Vector3 sca = transform->getScale();
       float fSca[3] = { sca.x, sca.y, sca.z };
-      if (ImGui::DragFloat3("Scale", fSca, 0.01f)) {
-        transform->setScale(EU::Vector3(fSca[0], fSca[1], fSca[2]));
-      }
+
+      
+      // Esto dibujará los controles chulos con colores
+      UI.vec3Control("Position", fPos);
+      UI.vec3Control("Rotation", fRot);
+      UI.vec3Control("Scale", fSca, 1.0f); // Reset scale a 1.0
+
+      // Actualizamos el transform si algo cambió
+      transform->setPosition(EU::Vector3(fPos[0], fPos[1], fPos[2]));
+      transform->setRotation(EU::Vector3(fRot[0], fRot[1], fRot[2]));
+      transform->setScale(EU::Vector3(fSca[0], fSca[1], fSca[2]));
     }
   }
   ImGui::End();
