@@ -8,13 +8,35 @@ BaseApp::BaseApp(HINSTANCE hInst, int nCmdShow) {
 
 }
 
+HRESULT
+BaseApp::awake() {
+  HRESULT hr = S_OK;
+  //Inicializacion de dlls y elemenos externos al motor. 
+
+  //Log succes message
+  MESSAGE("Main", "Awaake", "Application awake succesfully");
+  return hr;
+}
+
+
 int
 BaseApp::run(HINSTANCE hInst, int nCmdShow) {
+  //1) Initialize Window
   if (FAILED(m_window.init(hInst, nCmdShow, WndProc))) {
+    ERROR("Main", "Run", "Failed to initialize window.");
     return 0;
   }
-  if (FAILED(init()))
+  // 2) Awake application
+  if (FAILED(awake())) {
+     //log error msg
+     ERROR("Main", "Run", "Failed to awake application");
+  }
+  // 3) Initialize Device and Device Context
+  if (FAILED(init())) {
+    ERROR("Main", "Run", "Failed to initialize device and device context.");
     return 0;
+  }
+   
   // Main message loop
   MSG msg = {};
   LARGE_INTEGER freq, prev;

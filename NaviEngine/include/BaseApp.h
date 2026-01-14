@@ -27,6 +27,9 @@ public:
   // Destructor
   ~BaseApp() { destroy(); }
 
+  HRESULT
+    awake();
+
   int
     run(HINSTANCE hInst, int nCmdShow);
 

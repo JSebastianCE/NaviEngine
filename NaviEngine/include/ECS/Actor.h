@@ -47,6 +47,9 @@ public:
    */
   virtual ~Actor() = default;
 
+  void 
+  awake() override{}
+
   /**
    * @brief Inicializa el actor. Implementación vacía.
    */

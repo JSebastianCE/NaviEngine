@@ -20,15 +20,14 @@ Actor::Actor(Device& device) {
     ERROR("Actor", classNameType.c_str(), "Failed to create new CBChangesEveryFrame");
   }
 
+  //Awake
+  awake();
+
   hr = m_sampler.init(device);
   if (FAILED(hr)) {
     ERROR("Actor", classNameType.c_str(), "Failed to create new SamplerState");
   }
 
- 
-  //hr = m_rasterizer.init(device);
-  // ... (resto del código comentado del profesor)
-  //m_LightPos = XMFLOAT4(2.0f, 4.0f, -2.0f, 1.0f);
 }
 
 void 

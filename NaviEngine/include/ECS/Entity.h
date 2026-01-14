@@ -27,6 +27,10 @@ public:
   virtual
   ~Entity() = default;
 
+  virtual void
+  awake() = 0;
+
+
   /**
    * @brief Inicializa la entidad. Debe ser implementado por clases derivadas.
    */
