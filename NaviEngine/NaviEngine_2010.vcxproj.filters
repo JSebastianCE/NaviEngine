@@ -45,6 +45,12 @@
     <Filter Include="include\Utilities\Vector">
       <UniqueIdentifier>{4c49c706-c295-4541-b016-3497357efc2e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\SceneGraph">
+      <UniqueIdentifier>{6721c90b-922d-49c6-b0cb-41d8f1c40ee5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\SceneGraph">
+      <UniqueIdentifier>{2834e1d2-0a96-4b1c-8924-4c2edb816250}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Window.h">
@@ -176,6 +182,12 @@
     <ClInclude Include="Imgui\ImGuizmo\ImGuizmo.h">
       <Filter>Imgui\Includes</Filter>
     </ClInclude>
+    <ClInclude Include="include\SceneGgraph\HierarchyComponent.h">
+      <Filter>include\SceneGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SceneGgraph\SceneGraph.h">
+      <Filter>include\SceneGraph</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">
@@ -271,6 +283,9 @@
     </ClCompile>
     <ClCompile Include="Imgui\ImGuizmo\ImGuizmo.cpp">
       <Filter>Imgui\src</Filter>
+    </ClCompile>
+    <ClCompile Include="source\SceneGraph\SceneGraph.cpp">
+      <Filter>source\SceneGraph</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

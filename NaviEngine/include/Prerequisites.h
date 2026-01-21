@@ -142,5 +142,7 @@ enum
   NONE = 0,    
   TRANSFORM = 1,
   MESH = 2,     
-  MATERIAL = 3
+  MATERIAL = 3, 
+  HIERARCHY = 4
 };
+

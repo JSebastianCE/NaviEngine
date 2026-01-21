@@ -141,6 +141,7 @@ public:
   void
   transform(const EU::Vector3& translation);
 
+  
 
 private:
   EU::Vector3 position;  ///< Posición del objeto.

@@ -68,6 +68,14 @@ namespace
 			return TSharedPointer<T>();
 		}
 
+
+		// Reset
+		void
+			reset() {
+			ptr = nullptr;
+			refCount = nullptr;
+		} 
+
 		// Hacer que TSharedPointer sea un amigo para acceder a los miembros privados.
 		template<typename U>
 		friend class TSharedPointer;
@@ -76,6 +84,7 @@ namespace
 		T* ptr;       ///< Puntero al objeto observado.
 		int* refCount; ///< Puntero al recuento de referencias del TSharedPointer original.
 	};
+
 
 	/*
 	#include "TSharedPointer.h"

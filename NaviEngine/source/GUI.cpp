@@ -256,7 +256,7 @@ void GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
 }
 
 // --------------------------------------------------------------------------------------
-// GIZMO LOGIC (MEJORADA Y CORREGIDA)
+// GIZMO LOGIC 
 // --------------------------------------------------------------------------------------
 void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TSharedPointer<Actor> actor) {
   if (actor.isNull()) return;
@@ -282,7 +282,7 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
   XMStoreFloat4x4((XMFLOAT4X4*)viewArr, view);
   XMStoreFloat4x4((XMFLOAT4X4*)projArr, projection);
 
-  // 4. Configurar Snap (Atracción a la rejilla - Lógica del profesor)
+  // 4. Configurar Snap (Atracción a la rejilla)
   ImGuiIO& io = ImGui::GetIO();
   float snapValue = 0.5f; // Snap por defecto para Traslación/Escala
   if (mCurrentGizmoOperation == ImGuizmo::ROTATE) snapValue = 5.0f; // Snap de 5 grados para Rotación
@@ -330,7 +330,7 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
 }
 
 // --------------------------------------------------------------------------------------
-// TOOLBAR (ESTILO PROFESOR)
+// TOOLBAR
 // --------------------------------------------------------------------------------------
 void GUI::drawGizmoToolbar() {
   ImGuiIO& io = ImGui::GetIO();
