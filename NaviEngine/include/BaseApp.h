@@ -13,40 +13,41 @@
 #include "Buffer.h"
 #include "SamplerState.h"
 
-// Inclusiones adicionales necesarias para tu proyecto
+// Inclusiones adicionales necesarias  proyecto
 #include "ModelLoader.h"
 #include "Model3D.h"
-#include "UserInterface.h"
+#include "GUI.h"
 #include "ECS/Actor.h"
 
-class BaseApp {
+class 
+BaseApp {
 public:
-  // Tu constructor personalizado (necesario para tu .cpp)
+  // Tu constructor personalizado 
   BaseApp(HINSTANCE hInst, int nCmdShow);
 
   // Destructor
   ~BaseApp() { destroy(); }
 
   HRESULT
-    awake();
+  awake();
 
   int
-    run(HINSTANCE hInst, int nCmdShow);
+  run(HINSTANCE hInst, int nCmdShow);
 
   HRESULT
-    init();
+  init();
 
   void
-    update(float deltaTime);
+  update(float deltaTime);
 
   void
-    render();
+  render();
 
   void
-    destroy();
+  destroy();
 
 private:
-  static LRESULT CALLBACK
+static LRESULT CALLBACK
     WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 private:
@@ -93,5 +94,5 @@ private:
   CBChangesEveryFrame                 cb;                  
 
   // Interfaz de Usuario
-  UserInterface                       UI;
+  GUI                       UI;
 };

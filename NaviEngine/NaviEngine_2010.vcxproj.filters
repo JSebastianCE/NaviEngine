@@ -140,7 +140,7 @@
     <ClInclude Include="Imgui\imgui-docking\imstb_truetype.h">
       <Filter>Imgui\Includes</Filter>
     </ClInclude>
-    <ClInclude Include="include\UserInterface.h">
+    <ClInclude Include="include\GUI.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="include\ECS\Entity.h">
@@ -172,6 +172,9 @@
     </ClInclude>
     <ClInclude Include="include\EngineUtilities\Vectors\Vector4.h">
       <Filter>include\Utilities\Vector</Filter>
+    </ClInclude>
+    <ClInclude Include="Imgui\ImGuizmo\ImGuizmo.h">
+      <Filter>Imgui\Includes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -260,11 +263,14 @@
     <ClCompile Include="Imgui\imgui-docking\backends\imgui_impl_win32.cpp">
       <Filter>Imgui\src</Filter>
     </ClCompile>
-    <ClCompile Include="source\UserInterface.cpp">
+    <ClCompile Include="source\GUI.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\ECS\Actor.cpp">
       <Filter>source\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="Imgui\ImGuizmo\ImGuizmo.cpp">
+      <Filter>Imgui\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

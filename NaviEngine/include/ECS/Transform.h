@@ -11,9 +11,9 @@
  * Genera y actualiza la matriz de transformación combinando traslación,
  * rotación y escala. Hereda de la clase Component.
  */
-class 
-Transform : 
-public 
+class
+Transform :
+public
 Component {
 
 public:
@@ -32,7 +32,7 @@ public:
 
   /**
    * @brief Inicializa el componente transform estableciendo escala a uno
-   *        y la matriz a identidad.
+   * y la matriz a identidad.
    */
   void
   init() {
@@ -43,17 +43,17 @@ public:
 
   /**
    * @brief Actualiza la matriz de transformación combinando escala, rotación
-   *        y traslación en el orden apropiado.
+   * y traslación en el orden apropiado.
    * @param deltaTime Tiempo transcurrido entre frames.
    */
-  void 
+  void
   update(float deltaTime) override {
 
     // Aplicar escala
     XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
 
-    // Aplicar rotacion
-    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+    // Aplicar rotacion (CORREGIDO: Convertir Grados a Radianes)
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(XMConvertToRadians(rotation.x), XMConvertToRadians(rotation.y), XMConvertToRadians(rotation.z));
 
     // Aplicar traslacion
     XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);
@@ -126,9 +126,9 @@ public:
    * @param newSca Nueva escala.
    */
   void
-    setTransform(const EU::Vector3& newPos,
-                const EU::Vector3& newRot,
-                const EU::Vector3& newSca) {
+  setTransform(const EU::Vector3& newPos,
+      const EU::Vector3& newRot,
+      const EU::Vector3& newSca) {
     position = newPos;
     rotation = newRot;
     scale = newSca;
