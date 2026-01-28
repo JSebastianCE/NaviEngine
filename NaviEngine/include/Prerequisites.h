@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <xnamath.h>
 #include <thread>
+#include <array>
 
 #include <memory>
 #include <unordered_map>

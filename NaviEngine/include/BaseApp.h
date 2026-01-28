@@ -73,6 +73,9 @@ private:
   Buffer                              m_cbChangesEveryFrame;
 
   Texture                             m_cyberGunAlbedo;      // Tu textura especifica
+
+  Texture															m_skyboxTex;
+
   SamplerState                        m_samplerState;
 
   // Matrices y Variables Globales

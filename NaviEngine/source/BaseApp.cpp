@@ -107,6 +107,17 @@ HRESULT BaseApp::init() {
 
   // --- Load Resources (Modelos y Texturas) ---
 
+  std::array<std::string, 6> faces = {
+  "Skybox/cubemap_0.png",
+  "Skybox/cubemap_1.png",
+  "Skybox/cubemap_2.png",
+  "Skybox/cubemap_3.png",
+  "Skybox/cubemap_4.png",
+  "Skybox/cubemap_5.png"
+  };
+  m_skyboxTex.CreateCubemap(m_device, m_deviceContext, faces, true);
+
+
   m_cyberGun = EU::MakeShared<Actor>(m_device);
 
   if (!m_cyberGun.isNull()) {
@@ -150,18 +161,13 @@ HRESULT BaseApp::init() {
     return E_FAIL;
   }
 
-  m_Character = EU::MakeShared<Actor>(m_device);
-  m_Character->setName("m_Character");
-  m_Character->getComponent<Transform>()->setTransform(EU::Vector3(2.0f, -4.90f, 11.60f),
-    EU::Vector3(-0.60f, 3.0f, -0.20f),
-    EU::Vector3(1.0f, 1.0f, 1.0f));
+  
 
   // Store the Actors in the Scene Graph
   for (auto& actor : m_actors) {
     m_sceneGraph.addEntity(actor.get());
   }
 
-  m_sceneGraph.attach(m_Character.get(), m_sceneGraph.m_entities[0]); // Attach to root
 
   // Define the input layout
   std::vector<D3D11_INPUT_ELEMENT_DESC> Layout;
@@ -222,6 +228,34 @@ void BaseApp::update(float deltaTime) {
 
   // Panel de Jerarquía
   m_gui.outliner(m_actors);
+
+
+  // Shot cubemap on imgui image
+  static ID3D11ShaderResourceView* faceSRV[6] = { nullptr };
+
+  if (!faceSRV[0]) {
+    for (UINT i = 0; i < 6; ++i) {
+      faceSRV[i] = m_skyboxTex.CreateCubemapFaceSRV(m_device.m_device, m_skyboxTex.m_texture,
+        DXGI_FORMAT_R8G8B8A8_UNORM, i, 1);
+    }
+  }
+
+  ImGui::Text("Cubemap Faces:");
+  const float thumb = 128.0f;
+
+  for (int i = 0; i < 6; ++i) {
+    ImGui::Image((ImTextureID)faceSRV[i], ImVec2(thumb, thumb));
+    if ((i % 3) != 2) ImGui::SameLine();
+  }
+  ImGui::Begin("Cubemap");
+  ImGui::Text("Skybox Cubemap");
+  ImGui::Image((void*)m_skyboxTex.m_textureFromImg,
+    ImVec2(256, 256),
+    ImVec2(0, 0),
+    ImVec2(1, 1));
+  ImGui::End();
+
+
 
   // Validar si hay un actor seleccionado antes de mostrar inspector o gizmos
   if (m_gui.selectedActorIndex >= 0 && 
@@ -287,6 +321,7 @@ void
 BaseApp::destroy() {
   if (m_deviceContext.m_deviceContext) m_deviceContext.m_deviceContext->ClearState();
 
+  m_sceneGraph.destroy();
   m_cbNeverChanges.destroy();
   m_cbChangeOnResize.destroy();
   m_shaderProgram.destroy();
