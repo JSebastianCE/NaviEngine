@@ -1,53 +1,53 @@
 #pragma once
 #include "Prerequisites.h"
 
-class 
-Entity;
+class Entity;
+class DeviceContext;
 
 class
-DeviceContext;
-
-class 
-SceneGraph
-{
+	SceneGraph {
 public:
-  SceneGraph() = default;
-  ~SceneGraph() = default;
+	SceneGraph() = default;
+	~SceneGraph() = default;
 
-  void
-  init();
+	void
+		init();
 
-  void
-  addEntity(const EU::TSharedPointer<Entity>& e);
+	void
+		addEntity(Entity* e);  // registra en el grafo
 
-  void
-  attach(const EU::TSharedPointer<Entity>& child,
-         const EU::TSharedPointer<Entity>& parent);
+	void
+		removeEntity(Entity* e);
 
-  void
-  detach(const EU::TSharedPointer<Entity>& child);
+	bool
+		isAncestor(Entity* possibleAncestor, Entity* node) const;
 
-  
+	bool
+		attach(Entity* child, Entity* parent);
 
- 
+	bool
+		detach(Entity* child);
 
- 
+	void
+		update(float deltaTime, DeviceContext& deviceContext);
 
-  void
-  update(float deltaTime, DeviceContext& deviceContext);
+	void
+		render(DeviceContext& deviceContext);
 
-  void
-  render(DeviceContext& deviceContext);
+	void
+		destroy();
+private:
+	void
+		updateWorldRecursive(Entity* node, const XMMATRIX& parentWorld);
 
+	bool
+		isRoot(Entity* e) const;
+
+	bool
+		isRegistered(Entity* e) const;
 
 private:
-
- bool 
- isRoot(const EU::TSharedPointer<Entity>& e) const;
-
-void
-  updateWorldRecursive(const EU::TSharedPointer<Entity>& node, const XMMATRIX& parentWorld);
-
-
-  std::vector<EU::TSharedPointer<Entity>> m_entities;
+	//std::vector<EU::TSharedPointer<Entity>> m_entities;
+public:
+	std::vector<Entity*> m_entities;
 };

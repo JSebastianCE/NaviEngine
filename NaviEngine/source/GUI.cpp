@@ -1,19 +1,19 @@
-#include "GUI.h"
+Ôªø#include "GUI.h"
 #include "Window.h"
 #include "Device.h"
 #include "DeviceContext.h"
 #include "MeshComponent.h"
 #include "ECS\Actor.h"
 
-// Inicializar variables est·ticas para el Gizmo
+// Inicializar variables est√°ticas para el Gizmo
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
 static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
 
 void GUI::awake() {
-  // LÛgica inicial si se requiere
+  // L√≥gica inicial si se requiere
 }
 
-// DeclaraciÛn adelantada del estilo (la definimos abajo)
+// Declaraci√≥n adelantada del estilo (la definimos abajo)
 void appleLiquidStyle(float opacity, ImVec4 accent);
 
 void GUI::init(void* window, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
@@ -246,13 +246,13 @@ void GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
   vec3Control("Rotation", r);
   vec3Control("Scale", s, 1.0f);
 
-  // ActualizaciÛn b·sica desde el inspector numÈrico
+  // Actualizaci√≥n b√°sica desde el inspector num√©rico
   transform->setPosition(EU::Vector3(p[0], p[1], p[2]));
   transform->setRotation(EU::Vector3(r[0], r[1], r[2]));
   transform->setScale(EU::Vector3(s[0], s[1], s[2]));
 
-  // IMPORTANTE: AquÌ tambiÈn deberÌas recalcular la matriz si cambias los n˙meros manualmente
-  // Pero lo dejaremos para la funciÛn editTransform que es la crÌtica.
+  // IMPORTANTE: Aqu√≠ tambi√©n deber√≠as recalcular la matriz si cambias los n√∫meros manualmente
+  // Pero lo dejaremos para la funci√≥n editTransform que es la cr√≠tica.
 }
 
 // --------------------------------------------------------------------------------------
@@ -265,7 +265,7 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
 
   // 1. Obtener datos actuales
   EU::Vector3 pos = transform->getPosition();
-  EU::Vector3 rot = transform->getRotation(); // Esto est· en GRADOS
+  EU::Vector3 rot = transform->getRotation(); // Esto est√° en GRADOS
   EU::Vector3 sca = transform->getScale();
 
   float p[3] = { pos.x, pos.y, pos.z };
@@ -282,10 +282,10 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
   XMStoreFloat4x4((XMFLOAT4X4*)viewArr, view);
   XMStoreFloat4x4((XMFLOAT4X4*)projArr, projection);
 
-  // 4. Configurar Snap (AtracciÛn a la rejilla)
+  // 4. Configurar Snap (Atracci√≥n a la rejilla)
   ImGuiIO& io = ImGui::GetIO();
-  float snapValue = 0.5f; // Snap por defecto para TraslaciÛn/Escala
-  if (mCurrentGizmoOperation == ImGuizmo::ROTATE) snapValue = 5.0f; // Snap de 5 grados para RotaciÛn
+  float snapValue = 0.5f; // Snap por defecto para Traslaci√≥n/Escala
+  if (mCurrentGizmoOperation == ImGuizmo::ROTATE) snapValue = 5.0f; // Snap de 5 grados para Rotaci√≥n
 
   float snap[3] = { snapValue, snapValue, snapValue };
   bool useSnap = io.KeyCtrl; // Activar snap con CTRL
@@ -303,7 +303,7 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
     useSnap ? snap : nullptr
   );
 
-  // 6. Si el usuario moviÛ el Gizmo, actualizar TODO correctamente
+  // 6. Si el usuario movi√≥ el Gizmo, actualizar TODO correctamente
   if (ImGuizmo::IsUsing()) {
     float newP[3], newR[3], newS[3];
     // Descomponer la matriz modificada por el Gizmo
@@ -314,8 +314,8 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
     transform->setRotation(EU::Vector3(newR[0], newR[1], newR[2])); // Guardamos grados
     transform->setScale(EU::Vector3(newS[0], newS[1], newS[2]));
 
-    // B) RECONSTRUCCI”N DE MATRIZ DE DIRECTX (CRÕTICO)
-    // Convertimos Grados -> Radianes solo para la matriz matem·tica
+    // B) RECONSTRUCCI√ìN DE MATRIZ DE DIRECTX (CR√çTICO)
+    // Convertimos Grados -> Radianes solo para la matriz matem√°tica
     XMMATRIX matScale = XMMatrixScaling(newS[0], newS[1], newS[2]);
     XMMATRIX matRot = XMMatrixRotationRollPitchYaw(
       XMConvertToRadians(newR[0]),
@@ -335,7 +335,7 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
 void GUI::drawGizmoToolbar() {
   ImGuiIO& io = ImGui::GetIO();
 
-  // ConfiguraciÛn de la ventana flotante
+  // Configuraci√≥n de la ventana flotante
   ImGui::SetNextWindowPos(ImVec2(10, 50), ImGuiCond_FirstUseEver);
   ImGui::SetNextWindowBgAlpha(0.35f);
 
@@ -351,7 +351,7 @@ void GUI::drawGizmoToolbar() {
     auto buttonMode = [&](const char* label, ImGuizmo::OPERATION op) {
       bool isActive = (mCurrentGizmoOperation == op);
       if (isActive) {
-        // Azul si est· activo
+        // Azul si est√° activo
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.8f, 1.0f));
       }
       if (ImGui::Button(label)) {
@@ -375,7 +375,7 @@ void GUI::drawGizmoToolbar() {
 }
 
 // --------------------------------------------------------------------------------------
-// DEFINICI”N DE ESTILO (COPIADO Y ADAPTADO DEL PROFESOR)
+// DEFINICI√ìN DE ESTILO (COPIADO Y ADAPTADO DEL PROFESOR)
 // --------------------------------------------------------------------------------------
 void appleLiquidStyle(float opacity, ImVec4 accent) {
   ImGuiStyle& style = ImGui::GetStyle();

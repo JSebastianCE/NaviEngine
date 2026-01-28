@@ -19,8 +19,10 @@
 #include "GUI.h"
 #include "ECS/Actor.h"
 
-class 
-BaseApp {
+#include "SceneGraph\SceneGraph.h"
+
+class
+  BaseApp {
 public:
   // Tu constructor personalizado 
   BaseApp(HINSTANCE hInst, int nCmdShow);
@@ -29,25 +31,25 @@ public:
   ~BaseApp() { destroy(); }
 
   HRESULT
-  awake();
+    awake();
 
   int
-  run(HINSTANCE hInst, int nCmdShow);
+    run(HINSTANCE hInst, int nCmdShow);
 
   HRESULT
-  init();
+    init();
 
   void
-  update(float deltaTime);
+    update(float deltaTime);
 
   void
-  render();
+    render();
 
   void
-  destroy();
+    destroy();
 
 private:
-static LRESULT CALLBACK
+  static LRESULT CALLBACK
     WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 private:
@@ -68,20 +70,24 @@ private:
 
   Buffer                              m_cbNeverChanges;
   Buffer                              m_cbChangeOnResize;
-  Buffer                              m_cbChangesEveryFrame; 
+  Buffer                              m_cbChangesEveryFrame;
 
   Texture                             m_cyberGunAlbedo;      // Tu textura especifica
-  SamplerState                        m_samplerState;       
+  SamplerState                        m_samplerState;
 
   // Matrices y Variables Globales
-  XMMATRIX                            m_World;            
+  XMMATRIX                            m_World;
   XMMATRIX                            m_View;
   XMMATRIX                            m_Projection;
-  XMFLOAT4                            m_vMeshColor;       
+  XMFLOAT4                            m_vMeshColor;
+
+
+  SceneGraph													m_sceneGraph;
 
   // Actores
   std::vector<EU::TSharedPointer<Actor>> m_actors;
   EU::TSharedPointer<Actor>              m_cyberGun;
+  EU::TSharedPointer<Actor>              m_Character;
 
   // Recursos
   Model3D* m_model;
@@ -91,8 +97,8 @@ private:
   // Estructuras de Constant Buffers
   CBChangeOnResize                    cbChangesOnResize;
   CBNeverChanges                      cbNeverChanges;
-  CBChangesEveryFrame                 cb;                  
+  CBChangesEveryFrame                 cb;
 
   // Interfaz de Usuario
-  GUI                       UI;
+  GUI                                m_gui;
 };

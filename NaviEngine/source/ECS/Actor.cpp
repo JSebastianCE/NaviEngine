@@ -5,6 +5,7 @@
 
 #include "ECS/Transform.h" 
 
+
 Actor::Actor(Device& device) {
   // Setup Default Components
   EU::TSharedPointer<Transform> transform = EU::MakeShared<Transform>();

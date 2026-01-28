@@ -272,6 +272,8 @@ namespace EU {
 		}
 	};
 
+
+
 	/**
 	 * @brief Función de utilidad para crear un TSharedPointer.
 	 *

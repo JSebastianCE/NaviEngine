@@ -1,15 +1,18 @@
-#include "BaseApp.h"
+ï»¿#include "BaseApp.h"
 #include "ResourceManager.h"
 
-// Necesario para que Win32 reenvíe los inputs a ImGui
+// Necesario para que Win32 reenvÃ­e los inputs a ImGui
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 BaseApp::BaseApp(HINSTANCE hInst, int nCmdShow) {
-  // Constructor vacío
+  // Constructor vacÃ­o
 }
 
 HRESULT BaseApp::awake() {
   HRESULT hr = S_OK;
+
+  m_sceneGraph.init();
+
   // Inicializacion de dlls y elementos externos al motor. 
   MESSAGE("Main", "Awake", "Application awake successfully.");
   return hr;
@@ -35,7 +38,7 @@ int BaseApp::run(HINSTANCE hInst, int nCmdShow) {
   }
 
   // 4) Initialize GUI (Igual que el profesor, antes del loop)
-  UI.init(m_window.m_hWnd, m_device.m_device, m_deviceContext.m_deviceContext);
+  m_gui.init(m_window.m_hWnd, m_device.m_device, m_deviceContext.m_deviceContext);
 
   // Main message loop
   MSG msg = {};
@@ -129,7 +132,7 @@ HRESULT BaseApp::init() {
     m_cyberGun->setTextures(cyberGunTextures);
     m_cyberGun->setName("CyberGun");
 
-    // Añadir a la lista global de actores
+    // AÃ±adir a la lista global de actores
     m_actors.push_back(m_cyberGun);
 
     // Transform inicial
@@ -146,6 +149,19 @@ HRESULT BaseApp::init() {
     ERROR("Main", "InitDevice", "Failed to create CyberGun Actor.");
     return E_FAIL;
   }
+
+  m_Character = EU::MakeShared<Actor>(m_device);
+  m_Character->setName("m_Character");
+  m_Character->getComponent<Transform>()->setTransform(EU::Vector3(2.0f, -4.90f, 11.60f),
+    EU::Vector3(-0.60f, 3.0f, -0.20f),
+    EU::Vector3(1.0f, 1.0f, 1.0f));
+
+  // Store the Actors in the Scene Graph
+  for (auto& actor : m_actors) {
+    m_sceneGraph.addEntity(actor.get());
+  }
+
+  m_sceneGraph.attach(m_Character.get(), m_sceneGraph.m_entities[0]); // Attach to root
 
   // Define the input layout
   std::vector<D3D11_INPUT_ELEMENT_DESC> Layout;
@@ -202,20 +218,24 @@ void BaseApp::update(float deltaTime) {
   }
 
   // 2. UI Updates (Exactamente como el profesor)
-  UI.update();
+  m_gui.update();
 
-  // Panel de Jerarquía
-  UI.outliner(m_actors);
+  // Panel de JerarquÃ­a
+  m_gui.outliner(m_actors);
 
   // Validar si hay un actor seleccionado antes de mostrar inspector o gizmos
-  if (UI.selectedActorIndex >= 0 && UI.selectedActorIndex < m_actors.size()) {
-    auto& selectedActor = m_actors[UI.selectedActorIndex];
+  if (m_gui.selectedActorIndex >= 0 && 
+    m_gui.selectedActorIndex < m_actors.size()) {
+
+    auto& selectedActor = m_actors[m_gui.selectedActorIndex];
 
     // Panel Inspector
-    UI.inspectorGeneral(selectedActor);
+    m_gui.inspectorGeneral(selectedActor);
 
-    // Gizmos en pantalla (Manipulación 3D)
-    UI.editTransform(m_View, m_Projection, selectedActor);
+    // Gizmos en pantalla (ManipulaciÃ³n 3D)
+    m_gui.editTransform(m_View, m_Projection, selectedActor);
+
+    m_gui.editTransform(m_View, m_Projection, m_actors[m_gui.selectedActorIndex]);
   }
 
   // 3. Update Camera & Projection Matrices
@@ -227,11 +247,11 @@ void BaseApp::update(float deltaTime) {
   m_cbChangeOnResize.update(m_deviceContext, nullptr, 0, nullptr, &cbChangesOnResize, 0, 0);
 
   // 4. Update Actors logic
-  for (auto& actor : m_actors) {
-    if (!actor.isNull()) {
-      actor->update(deltaTime, m_deviceContext);
-    }
-  }
+  m_sceneGraph.update(deltaTime, m_deviceContext);
+
+  //for (auto& actor : m_actors) {
+  //	actor->update(deltaTime, m_deviceContext);
+  //}
 }
 
 void BaseApp::render() {
@@ -249,26 +269,23 @@ void BaseApp::render() {
   m_cbChangeOnResize.render(m_deviceContext, 1, 1);
 
   // 3. Render Scene
-  for (auto& actor : m_actors) {
-    if (!actor.isNull()) {
-      actor->render(m_deviceContext);
-    }
-  }
+  m_sceneGraph.render(m_deviceContext);
+
+  //for (auto& actor : m_actors) {
+  //	actor->render(m_deviceContext);
+  //}
+  
 
   // 4. Render UI (Always last before present)
-  UI.render();
+  m_gui.render();
 
   // 5. Present
   m_swapChain.present();
 }
 
-void BaseApp::destroy() {
+void
+BaseApp::destroy() {
   if (m_deviceContext.m_deviceContext) m_deviceContext.m_deviceContext->ClearState();
-
-  if (m_model) {
-    delete m_model;
-    m_model = nullptr;
-  }
 
   m_cbNeverChanges.destroy();
   m_cbChangeOnResize.destroy();
@@ -278,11 +295,9 @@ void BaseApp::destroy() {
   m_renderTargetView.destroy();
   m_swapChain.destroy();
   m_backBuffer.destroy();
-
+  m_gui.destroy();
   m_deviceContext.destroy();
   m_device.destroy();
-
-  UI.destroy();
 }
 
 LRESULT BaseApp::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {

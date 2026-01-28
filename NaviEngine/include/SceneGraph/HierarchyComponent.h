@@ -2,68 +2,69 @@
 #include "Prerequisites.h"
 #include "ECS/Component.h"
 
-class
-DeviceContext;
+class DeviceContext;
+class Entity;
 
 class
-Entity;
-
-class
-HierarchyComponent : public Component
-{
+	HierarchyComponent : public Component {
 public:
-  HierarchyComponent() : Component(ComponentType::HIERARCHY) {}
-  ~HierarchyComponent() = default;
+	HierarchyComponent() : Component(ComponentType::HIERARCHY) {}
+	~HierarchyComponent() = default;
 
-  void
-  init() override {}
+	void
+		init() override {}
 
+	void
+		update(float) override {}
 
-  void
-  update(float) override {}
+	void
+		render(DeviceContext& deviceContext) override {}
 
-  void
-  render(DeviceContext& deviceContext) override {}
+	void
+		destroy() override {
+		m_children.clear();
+		m_parent = nullptr;
+	}
 
-  void
-  destroy() override {
-    m_children.clear();
-    m_parent.reset();
-  }
+	// API SceneGraph
+	void
+		setParent(Entity* parent) {
+		m_parent = parent;
+	}
 
-  // API SceneGraph
-  void
-  setParent(const EU::TSharedPointer<Entity>& parent) {
-    m_parent = parent;
-  } 
+	bool
+		isRoot() const {
+		return m_parent == nullptr;
+	}
 
-  EU::TSharedPointer<Entity>
-    getParent() const {
-    return m_parent.lock();
-  }
+	bool
+		hasChildren() const {
+		return !m_children.empty();
+	}
 
-  const std::vector<EU::TWeakPointer<Entity>>&
-    getChildren() const {
-    return m_children;
-  }
+	void
+		addChild(Entity* child) {
+		if (!child) {
+			return;
+		}
 
-  void
-  addChild(const EU::TSharedPointer<Entity>& child) {
-    // evita duplicados
-    for (auto& w : m_children)
-      if (w.lock() == child) return;
+		if (std::find(m_children.begin(), m_children.end(), child) != m_children.end()) {
+			return;
+		}
+		m_children.push_back(child);
+	}
 
-    m_children.push_back(child);
-  }
+	void
+		removeChild(Entity* child) {
+		if (!child) return;
 
-  void
-  removeChild(const EU::TSharedPointer<Entity>& child) {
-    m_children.erase(
-      std::remove_if(m_children.begin(), m_children.end(),
-        [&](const EU::TWeakPointer<Entity>& w) { return w.lock() == child; }),
-      m_children.end());
-  } 
-private:
-  EU::TWeakPointer<Entity> m_parent;
-  std::vector<EU::TWeakPointer<Entity>> m_children;
+		m_children.erase(
+			std::remove(m_children.begin(), m_children.end(), child),
+			m_children.end()
+		);
+	}
+
+public:
+	Entity* m_parent = nullptr;
+	std::vector<Entity*> m_children;
 };
