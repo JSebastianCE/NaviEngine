@@ -9,14 +9,17 @@
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
 static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
 
-void GUI::awake() {
+void
+GUI::awake() {
   // Lógica inicial si se requiere
 }
 
 // Declaración adelantada del estilo (la definimos abajo)
-void appleLiquidStyle(float opacity, ImVec4 accent);
+void
+appleLiquidStyle(float opacity, ImVec4 accent);
 
-void GUI::init(void* window, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
+void 
+GUI::init(void* window, ID3D11Device* device, ID3D11DeviceContext* deviceContext) {
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -42,7 +45,8 @@ void GUI::init(void* window, ID3D11Device* device, ID3D11DeviceContext* deviceCo
   ImGui_ImplDX11_Init(device, deviceContext);
 }
 
-void GUI::update() {
+void
+GUI::update() {
   // Start the Dear ImGui frame
   ImGui_ImplDX11_NewFrame();
   ImGui_ImplWin32_NewFrame();
@@ -60,7 +64,8 @@ void GUI::update() {
   drawGizmoToolbar();
 }
 
-void GUI::render() {
+void
+GUI::render() {
   ImGui::Render();
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -73,13 +78,15 @@ void GUI::render() {
   }
 }
 
-void GUI::destroy() {
+void
+GUI::destroy() {
   ImGui_ImplDX11_Shutdown();
   ImGui_ImplWin32_Shutdown();
   ImGui::DestroyContext();
 }
 
-void GUI::ToolBar() {
+void
+GUI::ToolBar() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       if (ImGui::MenuItem("Exit", "Alt+F4")) {
@@ -91,7 +98,8 @@ void GUI::ToolBar() {
   }
 }
 
-void GUI::closeApp() {
+void 
+GUI::closeApp() {
   if (show_exit_popup) {
     ImGui::OpenPopup("Exit?");
     show_exit_popup = false;
@@ -116,7 +124,8 @@ void GUI::closeApp() {
   }
 }
 
-void GUI::vec3Control(const std::string& label, float* values, float resetValues, float columnWidth) {
+void 
+GUI::vec3Control(const std::string& label, float* values, float resetValues, float columnWidth) {
   ImGui::PushID(label.c_str());
 
   ImGui::Columns(2);
@@ -171,7 +180,8 @@ void GUI::vec3Control(const std::string& label, float* values, float resetValues
   ImGui::PopID();
 }
 
-void GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
+void 
+GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
   ImGui::Begin("Hierarchy");
 
   static ImGuiTextFilter filter;
@@ -205,7 +215,8 @@ void GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
   ImGui::End();
 }
 
-void GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
+void 
+GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
   ImGui::Begin("Inspector");
 
   if (!actor.isNull()) {
@@ -230,7 +241,8 @@ void GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
   ImGui::End();
 }
 
-void GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
+void 
+GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
   auto transform = actor->getComponent<Transform>();
   if (!transform) return;
 
@@ -258,7 +270,8 @@ void GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
 // --------------------------------------------------------------------------------------
 // GIZMO LOGIC 
 // --------------------------------------------------------------------------------------
-void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TSharedPointer<Actor> actor) {
+void 
+GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TSharedPointer<Actor> actor) {
   if (actor.isNull()) return;
   auto transform = actor->getComponent<Transform>();
   if (!transform) return;
@@ -332,7 +345,8 @@ void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TS
 // --------------------------------------------------------------------------------------
 // TOOLBAR
 // --------------------------------------------------------------------------------------
-void GUI::drawGizmoToolbar() {
+void 
+GUI::drawGizmoToolbar() {
   ImGuiIO& io = ImGui::GetIO();
 
   // Configuración de la ventana flotante
@@ -377,7 +391,8 @@ void GUI::drawGizmoToolbar() {
 // --------------------------------------------------------------------------------------
 // DEFINICIÓN DE ESTILO (COPIADO Y ADAPTADO DEL PROFESOR)
 // --------------------------------------------------------------------------------------
-void appleLiquidStyle(float opacity, ImVec4 accent) {
+void 
+appleLiquidStyle(float opacity, ImVec4 accent) {
   ImGuiStyle& style = ImGui::GetStyle();
   ImVec4* colors = style.Colors;
 
