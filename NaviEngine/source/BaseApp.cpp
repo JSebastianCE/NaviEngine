@@ -150,9 +150,9 @@ HRESULT BaseApp::init() {
     auto t = m_cyberGun->getComponent<Transform>();
     if (t) {
       t->setTransform(
-        EU::Vector3(0.19f, -15.80f, 12.86f),
-        EU::Vector3(-1.0f, 0.0f, 0.0f),
-        EU::Vector3(0.30f, 0.30f, 0.3f)
+        EU::Vector3(-6.5f, 1.0f, 36.0f), // Y = -15.8 (Muy abajo)
+        EU::Vector3(-90.0f, 0.0f, 0.0f),
+        EU::Vector3(0.30f, 0.30f, 0.3f)      // Escala 0.3 (Pequeña)
       );
     }
   }
@@ -189,23 +189,31 @@ HRESULT BaseApp::init() {
 
   // Create the constant buffers
   hr = m_cbNeverChanges.init(m_device, sizeof(CBNeverChanges));
-  if (FAILED(hr)) return hr;
+  if (FAILED(hr)) {
+    ERROR("Main", "InitDevice",
+      ("Failed to initialize NeverChanges Buffer. HRESULT: " + std::to_string(hr)).c_str());
+    return hr;
+  }
 
   hr = m_cbChangeOnResize.init(m_device, sizeof(CBChangeOnResize));
-  if (FAILED(hr)) return hr;
+  if (FAILED(hr)) {
+    ERROR("Main", "InitDevice",
+      ("Failed to initialize ChangeOnResize Buffer. HRESULT: " + std::to_string(hr)).c_str());
+    return hr;
+  }
 
-  // Initialize the view matrix
-  XMVECTOR Eye = XMVectorSet(0.0f, 18.0f, -18.0f, 0.0f);
-  XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-  XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-  m_View = XMMatrixLookAtLH(Eye, At, Up);
+  hr = m_cbChangesEveryFrame.init(m_device, sizeof(CBChangesEveryFrame));
+  if (FAILED(hr)) {
+    ERROR("Main", "InitDevice", "Failed to init ChangesEveryFrame Buffer.");
+    return hr;
+  }
 
-  // Initialize the projection matrix
-  cbNeverChanges.mView = XMMatrixTranspose(m_View);
-  m_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_window.m_width / (FLOAT)m_window.m_height, 0.01f, 100.0f);
-  cbChangesOnResize.mProjection = XMMatrixTranspose(m_Projection);
+  // Initialize the Camera
+  m_camera.setLens(XM_PIDIV4, m_window.m_width / (float)m_window.m_height, 0.01f, 100.0f);
+  m_camera.setPosition(0.0f, 3.0f, -6.0f);
 
-  // NOTA: UI.init() se ha movido a run() para coincidir con el profesor.
+  cbNeverChanges.mView = XMMatrixTranspose(m_camera.getView());
+  cbChangesOnResize.mProjection = XMMatrixTranspose(m_camera.getProj());
 
   return S_OK;
 }
@@ -258,27 +266,32 @@ void BaseApp::update(float deltaTime) {
 
 
   // Validar si hay un actor seleccionado antes de mostrar inspector o gizmos
-  if (m_gui.selectedActorIndex >= 0 && 
+ 
+
+// Validar si hay un actor seleccionado
+  if (m_gui.selectedActorIndex >= 0 &&
     m_gui.selectedActorIndex < m_actors.size()) {
 
     auto& selectedActor = m_actors[m_gui.selectedActorIndex];
 
-    // Panel Inspector
+    // 1. Muestra los valores numéricos en la ventana gris
     m_gui.inspectorGeneral(selectedActor);
 
-    // Gizmos en pantalla (Manipulación 3D)
-    m_gui.editTransform(m_View, m_Projection, selectedActor);
-
-    m_gui.editTransform(m_View, m_Projection, m_actors[m_gui.selectedActorIndex]);
+    // 2. Dibuja las FLECHAS 3D sobre el objeto en la escena principal
+    // (Solo una llamada es necesaria)
+    m_gui.editTransform(m_camera.getView(), m_camera.getProj(), selectedActor);
   }
 
+
   // 3. Update Camera & Projection Matrices
-  cbNeverChanges.mView = XMMatrixTranspose(m_View);
+  m_camera.updateViewMatrix();
+  cbNeverChanges.mView = XMMatrixTranspose(m_camera.getView());
   m_cbNeverChanges.update(m_deviceContext, nullptr, 0, nullptr, &cbNeverChanges, 0, 0);
 
-  m_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV4, m_window.m_width / (FLOAT)m_window.m_height, 0.01f, 100.0f);
-  cbChangesOnResize.mProjection = XMMatrixTranspose(m_Projection);
+
   m_cbChangeOnResize.update(m_deviceContext, nullptr, 0, nullptr, &cbChangesOnResize, 0, 0);
+  //cbChangesOnResize.mProjection = XMMatrixTranspose(m_camera.getProj());
+
 
   // 4. Update Actors logic
   m_sceneGraph.update(deltaTime, m_deviceContext);
@@ -287,6 +300,8 @@ void BaseApp::update(float deltaTime) {
   //	actor->update(deltaTime, m_deviceContext);
   //}
 }
+
+
 
 void BaseApp::render() {
   // 1. Clear Targets

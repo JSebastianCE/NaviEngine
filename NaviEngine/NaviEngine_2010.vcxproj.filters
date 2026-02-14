@@ -188,6 +188,9 @@
     <ClInclude Include="include\SceneGraph\SceneGraph.h">
       <Filter>include\SceneGraph</Filter>
     </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Utilities\Camera.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">
@@ -286,6 +289,9 @@
     </ClCompile>
     <ClCompile Include="source\SceneGraph\SceneGraph.cpp">
       <Filter>source\SceneGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Camera.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

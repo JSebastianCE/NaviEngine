@@ -446,6 +446,7 @@
     </ClCompile>
     <ClCompile Include="source\BaseApp.cpp" />
     <ClCompile Include="source\Buffer.cpp" />
+    <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\DepthStencilView.cpp" />
     <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\DeviceContext.cpp" />
@@ -490,6 +491,7 @@
     <ClInclude Include="include\EngineUtilities\Memory\TStaticPtr.h" />
     <ClInclude Include="include\EngineUtilities\Memory\TUniquePtr.h" />
     <ClInclude Include="include\EngineUtilities\Memory\TWeakPointer.h" />
+    <ClInclude Include="include\EngineUtilities\Utilities\Camera.h" />
     <ClInclude Include="include\EngineUtilities\Vectors\Vector2.h" />
     <ClInclude Include="include\EngineUtilities\Vectors\Vector3.h" />
     <ClInclude Include="include\EngineUtilities\Vectors\Vector4.h" />

@@ -20,6 +20,7 @@
 #include "ECS/Actor.h"
 
 #include "SceneGraph\SceneGraph.h"
+#include "EngineUtilities\Utilities\Camera.h"
 
 class
   BaseApp {
@@ -80,8 +81,12 @@ private:
 
   // Matrices y Variables Globales
   XMMATRIX                            m_World;
-  XMMATRIX                            m_View;
-  XMMATRIX                            m_Projection;
+
+
+  Camera															m_camera;
+  //XMMATRIX                            m_View;
+  //XMMATRIX                            m_Projection;
+
   XMFLOAT4                            m_vMeshColor;
 
 
