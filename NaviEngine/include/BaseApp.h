@@ -23,7 +23,7 @@
 #include "EngineUtilities\Utilities\Camera.h"
 
 class
-  BaseApp {
+BaseApp {
 public:
   // Tu constructor personalizado 
   BaseApp(HINSTANCE hInst, int nCmdShow);
@@ -32,25 +32,25 @@ public:
   ~BaseApp() { destroy(); }
 
   HRESULT
-    awake();
+  awake();
 
   int
-    run(HINSTANCE hInst, int nCmdShow);
+  run(HINSTANCE hInst, int nCmdShow);
 
   HRESULT
-    init();
+  init();
 
   void
-    update(float deltaTime);
+  update(float deltaTime);
 
   void
-    render();
+  render();
 
   void
-    destroy();
+  destroy();
 
 private:
-  static LRESULT CALLBACK
+ static LRESULT CALLBACK
     WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 private:

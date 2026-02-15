@@ -12,9 +12,8 @@
  * reconstruido manualmente desde sus vectores.
  */
 class
-  Transform : public
-  Component {
-
+Transform : public
+Component {
 public:
 
   /**
@@ -30,7 +29,7 @@ public:
    * Establece la escala en uno y la matriz como identidad.
    */
   void
-    init() {
+  init() {
     scale.one();
     matrix = XMMatrixIdentity();
   }
@@ -44,7 +43,7 @@ public:
    * @param deltaTime Tiempo transcurrido desde el último frame.
    */
   void
-    update(float deltaTime) override {
+  update(float deltaTime) override {
     // Vacío intencionalmente para evitar pelear con ImGuizmo
   }
 
@@ -56,7 +55,7 @@ public:
    * @param deviceContext Contexto de dispositivo DirectX.
    */
   void
-    render(DeviceContext& deviceContext) override {}
+  render(DeviceContext& deviceContext) override {}
 
   /**
    * @brief Libera recursos asociados al Transform.
@@ -77,7 +76,7 @@ public:
    * @param newPos Nueva posición en espacio mundo.
    */
   void
-    setPosition(const EU::Vector3& newPos) { position = newPos; }
+  setPosition(const EU::Vector3& newPos) { position = newPos; }
 
   /**
    * @brief Obtiene la rotación actual.
@@ -85,7 +84,7 @@ public:
    * @return Referencia constante a la rotación (en grados).
    */
   const
-    EU::Vector3& getRotation() const { return rotation; }
+  EU::Vector3& getRotation() const { return rotation; }
 
   /**
    * @brief Establece la rotación.
@@ -93,7 +92,7 @@ public:
    * @param newRot Nueva rotación en grados (Pitch, Yaw, Roll).
    */
   void
-    setRotation(const EU::Vector3& newRot) { rotation = newRot; }
+  setRotation(const EU::Vector3& newRot) { rotation = newRot; }
 
   /**
    * @brief Obtiene la escala actual.
@@ -101,7 +100,7 @@ public:
    * @return Referencia constante a la escala.
    */
   const
-    EU::Vector3& getScale() const { return scale; }
+  EU::Vector3& getScale() const { return scale; }
 
   /**
    * @brief Establece la escala.
@@ -109,7 +108,7 @@ public:
    * @param newScale Nueva escala por eje.
    */
   void
-    setScale(const EU::Vector3& newScale) { scale = newScale; }
+  setScale(const EU::Vector3& newScale) { scale = newScale; }
 
   /**
    * @brief Establece posición, rotación y escala simultáneamente.
@@ -119,7 +118,9 @@ public:
    * @param newSca Nueva escala.
    */
   void
-    setTransform(const EU::Vector3& newPos, const EU::Vector3& newRot, const EU::Vector3& newSca) {
+  setTransform(const EU::Vector3& newPos, 
+                const EU::Vector3& newRot, 
+                const EU::Vector3& newSca) {
     position = newPos;
     rotation = newRot;
     scale = newSca;
@@ -134,7 +135,8 @@ public:
    * El orden de multiplicación es:
    * Scale * Rotation * Translation
    */
-  void rebuildMatrixFromVectors() {
+  void 
+  rebuildMatrixFromVectors() {
     XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
     XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
       XMConvertToRadians(rotation.x),
@@ -153,7 +155,8 @@ public:
    *
    * @note Implementación definida en el archivo .cpp.
    */
-  void transform(const EU::Vector3& translation); // (Asumo que implementas esto en un .cpp)
+  void 
+  transform(const EU::Vector3& translation); // (Asumo que implementas esto en un .cpp)
 
 private:
 

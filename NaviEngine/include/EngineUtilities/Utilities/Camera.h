@@ -79,8 +79,8 @@ public:
 	 */
 	void
 	lookAt(const EU::Vector3& pos,
-			const EU::Vector3& target,
-			const EU::Vector3& up = EU::Vector3(0, 1, 0));
+				const EU::Vector3& target,
+				const EU::Vector3& up = EU::Vector3(0, 1, 0));
 
 
 	/**
