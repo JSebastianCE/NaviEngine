@@ -241,8 +241,7 @@ GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
   ImGui::End();
 }
 
-void 
-GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
+void GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
   auto transform = actor->getComponent<Transform>();
   if (!transform) return;
 
@@ -258,89 +257,74 @@ GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
   vec3Control("Rotation", r);
   vec3Control("Scale", s, 1.0f);
 
-  // Actualización básica desde el inspector numérico
-  transform->setPosition(EU::Vector3(p[0], p[1], p[2]));
-  transform->setRotation(EU::Vector3(r[0], r[1], r[2]));
-  transform->setScale(EU::Vector3(s[0], s[1], s[2]));
+  // 1. Detectar si el usuario modificó los números a mano en la UI
+  bool changed = (
+      p[0] != pos.x || p[1] != pos.y || p[2] != pos.z ||
+      r[0] != rot.x || r[1] != rot.y || r[2] != rot.z ||
+      s[0] != sca.x || s[1] != sca.y || s[2] != sca.z
+  );
 
-  // IMPORTANTE: Aquí también deberías recalcular la matriz si cambias los números manualmente
-  // Pero lo dejaremos para la función editTransform que es la crítica.
+  if (changed) {
+      transform->setPosition(EU::Vector3(p[0], p[1], p[2]));
+      transform->setRotation(EU::Vector3(r[0], r[1], r[2]));
+      transform->setScale(EU::Vector3(s[0], s[1], s[2]));
+
+      // 2. Si cambiaste números manualmente, construimos la matriz usando la misma 
+      // matemática de ImGuizmo para que no pelee con el Gizmo visual.
+      float newMatrix[16];
+      ImGuizmo::RecomposeMatrixFromComponents(p, r, s, newMatrix);
+      XMFLOAT4X4 newF(newMatrix); // Cargamos el arreglo a formato DirectX
+      transform->matrix = XMLoadFloat4x4(&newF);
+  }
 }
 
-// --------------------------------------------------------------------------------------
-// GIZMO LOGIC 
-// --------------------------------------------------------------------------------------
-void 
-GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TSharedPointer<Actor> actor) {
+void GUI::editTransform(const XMMATRIX& view, const XMMATRIX& projection, EU::TSharedPointer<Actor> actor) {
   if (actor.isNull()) return;
   auto transform = actor->getComponent<Transform>();
   if (!transform) return;
 
-  // 1. Obtener datos actuales
-  EU::Vector3 pos = transform->getPosition();
-  EU::Vector3 rot = transform->getRotation(); // Esto está en GRADOS
-  EU::Vector3 sca = transform->getScale();
+  // 1. Usar la matriz DIRECTAMENTE del Transform. 
+  // Nada de recomponer con ángulos de Euler al inicio.
+  XMFLOAT4X4 modelF, viewF, projF;
+  XMStoreFloat4x4(&modelF, transform->matrix);
+  XMStoreFloat4x4(&viewF, view);
+  XMStoreFloat4x4(&projF, projection);
 
-  float p[3] = { pos.x, pos.y, pos.z };
-  float r[3] = { rot.x, rot.y, rot.z };
-  float s[3] = { sca.x, sca.y, sca.z };
-
-  // 2. Recomponer la matriz para ImGuizmo (Usando los datos P/R/S)
-  float modelMatrix[16];
-  ImGuizmo::RecomposeMatrixFromComponents(p, r, s, modelMatrix);
-
-  // 3. Preparar View y Projection
-  float viewArr[16];
-  float projArr[16];
-  XMStoreFloat4x4((XMFLOAT4X4*)viewArr, view);
-  XMStoreFloat4x4((XMFLOAT4X4*)projArr, projection);
-
-  // 4. Configurar Snap (Atracción a la rejilla)
+  // 2. Configurar Snap
   ImGuiIO& io = ImGui::GetIO();
-  float snapValue = 0.5f; // Snap por defecto para Traslación/Escala
-  if (mCurrentGizmoOperation == ImGuizmo::ROTATE) snapValue = 5.0f; // Snap de 5 grados para Rotación
-
+  float snapValue = (mCurrentGizmoOperation == ImGuizmo::ROTATE) ? 5.0f : 0.5f;
   float snap[3] = { snapValue, snapValue, snapValue };
-  bool useSnap = io.KeyCtrl; // Activar snap con CTRL
+  bool useSnap = io.KeyCtrl;
 
-  // 5. Dibujar el Gizmo
+  // 3. Dibujar el Gizmo
   ImGuizmo::SetID(0);
-  // [Diagram of 3D Gizmo Tool] - Visualizing Translation/Rotation/Scale handles
   ImGuizmo::Manipulate(
-    viewArr,
-    projArr,
+    &viewF.m[0][0],
+    &projF.m[0][0],
     mCurrentGizmoOperation,
     mCurrentGizmoMode,
-    modelMatrix,
+    &modelF.m[0][0],
     nullptr,
     useSnap ? snap : nullptr
   );
 
-  // 6. Si el usuario movió el Gizmo, actualizar TODO correctamente
+  // 4. Si el usuario está moviendo la flecha en pantalla
   if (ImGuizmo::IsUsing()) {
+    // A) Guardar la matriz modificada DIRECTAMENTE al Transform.
+    // Esto evita que DirectX reinterprete los giros mal.
+    transform->matrix = XMLoadFloat4x4(&modelF);
+
+    // B) Extraer los valores SOLO para que los números en tu panel Gris se actualicen.
     float newP[3], newR[3], newS[3];
-    // Descomponer la matriz modificada por el Gizmo
-    ImGuizmo::DecomposeMatrixToComponents(modelMatrix, newP, newR, newS);
-
-    // A) Actualizar los valores simples en el componente
+    ImGuizmo::DecomposeMatrixToComponents(&modelF.m[0][0], newP, newR, newS);
     transform->setPosition(EU::Vector3(newP[0], newP[1], newP[2]));
-    transform->setRotation(EU::Vector3(newR[0], newR[1], newR[2])); // Guardamos grados
+    transform->setRotation(EU::Vector3(newR[0], newR[1], newR[2]));
     transform->setScale(EU::Vector3(newS[0], newS[1], newS[2]));
-
-    // B) RECONSTRUCCIÓN DE MATRIZ DE DIRECTX (CRÍTICO)
-    // Convertimos Grados -> Radianes solo para la matriz matemática
-    XMMATRIX matScale = XMMatrixScaling(newS[0], newS[1], newS[2]);
-    XMMATRIX matRot = XMMatrixRotationRollPitchYaw(
-      XMConvertToRadians(newR[0]),
-      XMConvertToRadians(newR[1]),
-      XMConvertToRadians(newR[2])
-    );
-    XMMATRIX matTrans = XMMatrixTranslation(newP[0], newP[1], newP[2]);
-
-    // Guardamos la matriz final SRT para que el renderizado sea correcto
-    transform->matrix = matScale * matRot * matTrans;
   }
 }
+
+
+
 
 // --------------------------------------------------------------------------------------
 // TOOLBAR
