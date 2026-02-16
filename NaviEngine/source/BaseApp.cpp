@@ -263,8 +263,6 @@ void BaseApp::update(float deltaTime) {
     ImVec2(1, 1));
   ImGui::End();
 
-
-
   // Validar si hay un actor seleccionado antes de mostrar inspector o gizmos
  
 

@@ -98,7 +98,7 @@ public:
   destroy();
 
   HRESULT
-    CreateCubemap(Device& device,
+  CreateCubemap(Device& device,
       DeviceContext& deviceContext,
       const std::array<std::string, 6>& facePaths,
       bool generateMips /*= false*/);
