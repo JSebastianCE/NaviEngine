@@ -89,6 +89,17 @@ SimpleVertex{
 };
 
 struct
+SkyboxVertex {
+  float x, y, z;
+};
+
+
+struct CBSkybox
+{
+  XMMATRIX mviewProj;
+};
+
+struct
 LoadData {
   std::string name;
   std::vector <SimpleVertex> vertex;

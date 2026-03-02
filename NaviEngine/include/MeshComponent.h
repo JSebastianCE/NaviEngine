@@ -65,6 +65,7 @@ public:
 
   /** @brief Vector que contiene los vértices de la malla. */
   std::vector<SimpleVertex> m_vertex;
+  std::vector<SkyboxVertex> m_skyVertex;
 
   /** @brief Vector que contiene los índices de la malla. */
   std::vector<unsigned int> m_index;

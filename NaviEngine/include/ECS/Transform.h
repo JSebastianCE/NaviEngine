@@ -61,7 +61,7 @@ public:
    * @brief Libera recursos asociados al Transform.
    */
   void
-    destroy() {}
+  destroy() {}
 
   /**
    * @brief Obtiene la posición actual.
