@@ -381,16 +381,21 @@ Texture::CreateCubemap(Device& device,
       return hr;
     }
 
-    for (unsigned int face = 0; face < 6; ++face)
+    UINT mipCount = 1 + (UINT)floor(log2(max(width, height)));
+
+    for (UINT face = 0; face < 6; ++face)
     {
-      // Mip 0, ArraySlice=face
-      unsigned int sub = D3D11CalcSubresource(0, face, 0 /*MipLevels=0*/);
-      deviceContext.UpdateSubresource(m_texture,
+      UINT sub = D3D11CalcSubresource(0, face, mipCount);
+
+      deviceContext.UpdateSubresource(
+        m_texture,
         sub,
         nullptr,
         facePixels[face],
-        static_cast<unsigned int>(width * 4), 0);
+        width * 4,
+        0);
     }
+    deviceContext.m_deviceContext->GenerateMips(m_textureFromImg);
   }
 
   // 3) Crear SRV dimension TEXTURECUBE

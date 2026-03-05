@@ -526,6 +526,9 @@
     <ResourceCompile Include="NaviEngine.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bin\Skybox.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>

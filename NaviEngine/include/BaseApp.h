@@ -22,6 +22,8 @@
 #include "SceneGraph\SceneGraph.h"
 #include "EngineUtilities\Utilities\Camera.h"
 
+#include "EngineUtilities\Utilities\Skybox.h"
+
 class
 BaseApp {
 public:
@@ -109,4 +111,8 @@ private:
 
   // Interfaz de Usuario
   GUI                                m_gui;
+
+  Skybox m_skybox;
+  RasterizerState m_defaultRasterizer;
+  DepthStencilState m_defaultDepthStencil;
 };

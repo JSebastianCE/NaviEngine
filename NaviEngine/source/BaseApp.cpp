@@ -115,7 +115,7 @@ HRESULT BaseApp::init() {
   "Skybox/cubemap_4.png",
   "Skybox/cubemap_5.png"
   };
-  m_skyboxTex.CreateCubemap(m_device, m_deviceContext, faces, true);
+  m_skyboxTex.CreateCubemap(m_device, m_deviceContext, faces, false);
 
 
   m_cyberGun = EU::MakeShared<Actor>(m_device);
@@ -215,6 +215,25 @@ HRESULT BaseApp::init() {
   cbNeverChanges.mView = XMMatrixTranspose(m_camera.getView());
   cbChangesOnResize.mProjection = XMMatrixTranspose(m_camera.getProj());
 
+  //Initialize Skybox
+  m_skybox.init(m_device, &m_deviceContext, m_skyboxTex);
+
+
+  //Initialize default states (Rasterizer, DepthStencil)
+  hr = m_defaultRasterizer.init(m_device, D3D11_FILL_SOLID, D3D11_CULL_BACK, false, true);
+  if (FAILED(hr)) {
+    ERROR("Main", "InitDevice",
+      ("Failed to initialize default Rasterizer. HRESULT: " + std::to_string(hr)).c_str());
+    return hr;
+  }
+  hr = m_defaultDepthStencil.init(m_device, true, D3D11_DEPTH_WRITE_MASK_ALL, D3D11_COMPARISON_LESS);
+  if (FAILED(hr)) {
+    ERROR("Main", "InitDevice",
+      ("Failed to initialize default DepthStencilState. HRESULT: " + std::to_string(hr)).c_str());
+    return hr;
+  }
+
+
   return S_OK;
 }
 
@@ -285,8 +304,6 @@ void BaseApp::update(float deltaTime) {
   m_camera.updateViewMatrix();
   cbNeverChanges.mView = XMMatrixTranspose(m_camera.getView());
   m_cbNeverChanges.update(m_deviceContext, nullptr, 0, nullptr, &cbNeverChanges, 0, 0);
-
-
   m_cbChangeOnResize.update(m_deviceContext, nullptr, 0, nullptr, &cbChangesOnResize, 0, 0);
   //cbChangesOnResize.mProjection = XMMatrixTranspose(m_camera.getProj());
 
@@ -294,34 +311,42 @@ void BaseApp::update(float deltaTime) {
   // 4. Update Actors logic
   m_sceneGraph.update(deltaTime, m_deviceContext);
 
-  //for (auto& actor : m_actors) {
-  //	actor->update(deltaTime, m_deviceContext);
-  //}
 }
 
 
 
-void BaseApp::render() {
-  // 1. Clear Targets
+void 
+BaseApp::render() {
+  // Clear Targets
   float ClearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
   m_renderTargetView.render(m_deviceContext, m_depthStencilView, 1, ClearColor);
 
   m_viewport.render(m_deviceContext);
   m_depthStencilView.render(m_deviceContext);
 
-  // 2. Set Pipeline State
+  // 1. Skybox Pass
+  m_skybox.render(m_deviceContext, m_camera);
+
+  // 2. Restaurar estados + pipeline de la escena
+  m_defaultRasterizer.render(m_deviceContext);
+  m_defaultDepthStencil.render(m_deviceContext, 0, false);
+
+  // limpiar SRVs por seguridad
+  ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+  m_deviceContext.m_deviceContext->PSSetShaderResources(10, 1, nullSRV);
+  m_deviceContext.m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
+
+  // Re-binda shader/layout de escena
   m_shaderProgram.render(m_deviceContext);
 
-  m_cbNeverChanges.render(m_deviceContext, 0, 1);
-  m_cbChangeOnResize.render(m_deviceContext, 1, 1);
+  //CBs para VS (view/proj)
+  m_cbNeverChanges.render(m_deviceContext, 0, 1); // slot 0 para never changes
+  m_cbChangeOnResize.render(m_deviceContext, 1, 1); // slot 1 para resize
 
-  // 3. Render Scene
+
+  // 3. Scene pass
   m_sceneGraph.render(m_deviceContext);
 
-  //for (auto& actor : m_actors) {
-  //	actor->render(m_deviceContext);
-  //}
-  
 
   // 4. Render UI (Always last before present)
   m_gui.render();

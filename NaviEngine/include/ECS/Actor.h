@@ -8,7 +8,8 @@
 
 #include "ShaderProgram.h"
 
-//DepthStencilState.h
+#include "RasterizerState.h"
+#include "DepthStencilState.h"
 
 class 
 Device;
@@ -70,6 +71,11 @@ public:
    */
   void
   render(DeviceContext& deviceContext) override;
+
+
+  void
+  renderForSkybox(DeviceContext& deviceContext);
+
 
   /**
    * @brief Libera los recursos asociados al actor.
@@ -133,7 +139,7 @@ private:
   std::vector<Buffer> m_indexBuffers;       ///< Buffers de índices asociados a las mallas.
 
   //BlendState m_blendState;                // Estado de blending usado por el actor.
-  //Rasterizer m_rasterizer;                // Estado de rasterización usado por el actor.
+  RasterizerState m_rasterizer;                // Estado de rasterización usado por el actor.
   SamplerState m_sampler;                   ///< Estado de muestreo de texturas.
   CBChangesEveryFrame m_model;              ///< Constant buffer con las transformaciones por frame.
   Buffer m_modelBuffer;                     ///< Buffer que contiene @c m_model.
@@ -142,7 +148,7 @@ private:
   ShaderProgram m_shaderShadow;             ///< Shader program utilizado para el renderizado de sombras.
   Buffer m_shaderBuffer;                    ///< Buffer auxiliar para datos de sombras.
   //BlendState m_shadowBlendState;          // Estado de blending específico para sombras.
-  //DepthStencilState m_shadowDepthStencilState; // Estado de profundidad/estencil para sombras.
+  DepthStencilState m_shadowDepthStencilState; // Estado de profundidad/estencil para sombras.
   CBChangesEveryFrame m_cbShadow;           ///< Constant buffer exclusivo para sombreado.
 
   XMFLOAT4 m_LightPos;                      ///< Posición de la luz para proyección de sombras.

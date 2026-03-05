@@ -38,6 +38,7 @@ public:
     MeshComponent mesh;
     mesh.m_skyVertex.assign(vertices, vertices + 8);
     mesh.m_index.assign(indices, indices + 36);
+    mesh.m_numIndex = mesh.m_index.size();
     SetType(ResourceType:: Model3D);
     m_meshes.push_back(mesh);
   }
