@@ -1,6 +1,9 @@
 #pragma once
 #include "Prerequisites.h"
 
+class
+BaseApp;
+
 /**
  * @class Window
  * @brief Representa una ventana de aplicación en Windows.
@@ -21,6 +24,7 @@ public:
    */
   ~Window() = default;
 
+
   /**
    * @brief Inicializa y crea la ventana de la aplicación.
    *
@@ -30,7 +34,7 @@ public:
    * @return HRESULT Código de resultado (S_OK si se creó correctamente).
    */
   HRESULT
-  init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc);
+  init(HINSTANCE hInstance, int nCmdShow, WNDPROC wndproc, BaseApp* app);
 
   /**
    * @brief Actualiza el estado de la ventana.

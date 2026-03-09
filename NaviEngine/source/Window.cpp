@@ -1,4 +1,6 @@
 #include "Window.h"
+#include "Device.h"
+#include "BaseApp.h"
 
 //
 // La función `init` inicializa la ventana de la aplicación.
@@ -7,7 +9,8 @@
 HRESULT
 Window::init(HINSTANCE hInstance, 
             int nCmdShow,
-            WNDPROC wndproc) {
+            WNDPROC wndproc,
+            BaseApp* app) {
   // Se guarda la instancia de la aplicación (handle de la instancia) en una variable miembro.
   m_hInst = hInstance;
 
@@ -53,7 +56,7 @@ Window::init(HINSTANCE hInstance,
     NULL, // Sin ventana padre.
     NULL, // Sin menú.
     hInstance, // Handle de la instancia.
-    NULL);
+    app);
   // Si la creación de la ventana falla, se muestra un mensaje de error y se devuelve E_FAIL.
   if (!m_hWnd) {
     MessageBox(nullptr, "CreateWindow failed!", "Error", MB_OK);

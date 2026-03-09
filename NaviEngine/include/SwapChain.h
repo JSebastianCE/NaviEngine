@@ -84,6 +84,12 @@ public:
   void
   present();
 
+  HRESULT
+  resizeBuffers(UINT width, UINT height);
+
+  HRESULT
+  getBackBuffer(Texture& backBuffer);
+
 
 
 public:

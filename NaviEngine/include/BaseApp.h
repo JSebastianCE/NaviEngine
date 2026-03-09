@@ -13,7 +13,7 @@
 #include "Buffer.h"
 #include "SamplerState.h"
 
-// Inclusiones adicionales necesarias  proyecto
+
 #include "ModelLoader.h"
 #include "Model3D.h"
 #include "GUI.h"
@@ -51,9 +51,15 @@ public:
   void
   destroy();
 
-private:
- static LRESULT CALLBACK
-    WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+  void
+  onResize(UINT newW, UINT newH);
+
+  void 
+  handleEditorViewportResize();
+
+  private:
+  static LRESULT CALLBACK
+  WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 private:
   Window                              m_window;
@@ -66,10 +72,18 @@ private:
   DepthStencilView                    m_depthStencilView;
   Viewport                            m_viewport;
   ShaderProgram                       m_shaderProgram;
-
-  // MeshComponent                    m_mesh;
   // Buffer                           m_vertexBuffer;
   // Buffer                           m_indexBuffer;
+
+  bool m_d3dReady = false;
+  Buffer                              m_constantBuffer;
+
+  //Textures
+  //Texture m_AlbedoSRV;
+  //Texture m_MetallicSRV;
+  //Texture m_RoughnessSRV;
+  //Texture m_AOSRV;
+  //Texture m_NormalSRV;
 
   Buffer                              m_cbNeverChanges;
   Buffer                              m_cbChangeOnResize;
