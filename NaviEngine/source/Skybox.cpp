@@ -52,22 +52,14 @@ Skybox::init(Device& device, DeviceContext* deviceContext, Texture& cubemap) {
 		return E_FAIL;
 	}
 
-
 	// Define the input layout
-	std::vector<D3D11_INPUT_ELEMENT_DESC> Layout;
-	D3D11_INPUT_ELEMENT_DESC position;
-	position.SemanticName = "POSITION";
-	position.SemanticIndex = 0;
-	position.Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	position.InputSlot = 0;
-	position.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT /*0*/;
-	position.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	position.InstanceDataStepRate = 0;
-	Layout.push_back(position);
+	LayoutBuilder builder;
+
+	builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT);
 
 	HRESULT hr = S_OK;
 	// Create the Shader Program
-	hr = m_shaderProgram.init(device, "Skybox.hlsl", Layout);
+	hr = m_shaderProgram.init(device, "Skybox.hlsl", builder);
 	if (FAILED(hr)) {
 		ERROR("Skybox", "init",
 			("Failed to initialize ShaderProgram. HRESULT: " + std::to_string(hr)).c_str());

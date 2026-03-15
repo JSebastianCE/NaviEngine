@@ -1,40 +1,38 @@
 #include "ShaderProgram.h"
 #include "Device.h"
 #include "DeviceContext.h"
+#include "EngineUtilities\Utilities\LayoutBuilder.h"
+
 
 HRESULT
 ShaderProgram::init(Device& device,
                     const std::string& fileName,
-                    std::vector < D3D11_INPUT_ELEMENT_DESC> Layout) {
+                    LayoutBuilder layoutBuilder) {
   if (!device.m_device) {
-    ERROR("ShaderProgram", "init", "InputLayout is empty.");
+    ERROR("ShaderProgram", "init", "Device is null.");
     return E_POINTER;
   }
   if (fileName.empty()) {
-    ERROR("ShaderProgram", "init", "InputLayout is empty.");
+    ERROR("ShaderProgram", "init", "File name is empty.");
     return E_INVALIDARG;
   }
-  if (Layout.empty()) {
-    ERROR("ShaderProgram", "init", "InputLayout is empty.");
-    return E_INVALIDARG;
-  }
+ 
   m_shaderFileName = fileName;
-
-  //Creacion del Vertex Shader
+  // Create the Vertex Shader
   HRESULT hr = CreateShader(device, ShaderType::VERTEX_SHADER);
   if (FAILED(hr)) {
     ERROR("ShaderProgram", "init", "Failed to create vertex shader.");
     return hr;
   }
 
-  //Creacion del Input Layout
-  hr = CreateInputLayout(device, Layout);
+  // Create the Input Layout
+  hr = CreateInputLayout(device, layoutBuilder);
   if (FAILED(hr)) {
-    ERROR("ShaderProgram", "init", "Failed to create input laoyut.");
+    ERROR("ShaderProgram", "init", "Failed to create input layout.");
     return hr;
   }
 
-  //Creacion pixel shader
+  // Create the Pixel Shader
   hr = CreateShader(device, ShaderType::PIXEL_SHADER);
   if (FAILED(hr)) {
     ERROR("ShaderProgram", "init", "Failed to create pixel shader.");
@@ -46,28 +44,26 @@ ShaderProgram::init(Device& device,
 
 HRESULT
 ShaderProgram::CreateInputLayout(Device& device,
-  std::vector<D3D11_INPUT_ELEMENT_DESC> Layout) {
-
+                                 LayoutBuilder layoutBuilder) {
   if (!m_vertexShaderData) {
-    ERROR("ShaderProgram", "CreateInputLayout", "VertexShader data is null.");
+    ERROR("ShaderProgram", "CreateInputLayout", "Vertex shader data is null.");
     return E_POINTER;
   }
   if (!device.m_device) {
-    ERROR("ShaderProgram", "CreateInputLayout", "Input layout is empty.");
-    return E_POINTER;
-  }
-  if (Layout.empty()) {
-    ERROR("ShaderProgram", "CreateInputLayout", "Input layout is empty.");
+    ERROR("ShaderProgram", "CreateInputLayout", "Device is null.");
     return E_POINTER;
   }
 
-  HRESULT hr = m_inputLayout.init(device, Layout, m_vertexShaderData);
+  auto& layout = layoutBuilder.Get();
+
+  HRESULT hr = m_inputLayout.init(device, layout.data(), layout.size(), m_vertexShaderData);
   SAFE_RELEASE(m_vertexShaderData);
 
   if (FAILED(hr)) {
     ERROR("ShaderProgram", "CreateInputLayout", "Failed to create input layout.");
     return hr;
   }
+
   return hr;
 }
 

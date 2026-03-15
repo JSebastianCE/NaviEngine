@@ -203,6 +203,9 @@
     <ClInclude Include="include\DepthStencilState.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\EngineUtilities\Utilities\LayoutBuilder.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="NaviEngine.fx">

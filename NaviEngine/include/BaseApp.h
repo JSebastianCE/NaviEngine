@@ -24,6 +24,8 @@
 
 #include "EngineUtilities\Utilities\Skybox.h"
 
+#include "EngineUtilities\Utilities\LayoutBuilder.h"
+
 class
 BaseApp {
 public:

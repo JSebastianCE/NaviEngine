@@ -496,6 +496,7 @@
     <ClInclude Include="include\EngineUtilities\Memory\TUniquePtr.h" />
     <ClInclude Include="include\EngineUtilities\Memory\TWeakPointer.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\Camera.h" />
+    <ClInclude Include="include\EngineUtilities\Utilities\LayoutBuilder.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\Skybox.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\SkyboxComponent.h" />
     <ClInclude Include="include\EngineUtilities\Vectors\Vector2.h" />

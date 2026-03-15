@@ -4,45 +4,46 @@
 
 HRESULT
 InputLayout::init(Device& device,
-  std::vector<D3D11_INPUT_ELEMENT_DESC>& Layout,
-  ID3DBlob* VertexShaderData) {
-
-  if (Layout.empty()) {
-    ERROR("InputLayout", "init", "Layout vector is empty");
+                  const D3D11_INPUT_ELEMENT_DESC* layoutDesc,
+                  UINT layoutCount,
+                  ID3DBlob* vertexShaderData)
+{
+  if (!layoutDesc || layoutCount == 0) {
+    ERROR("InputLayout", "init", "Layout descriptor is empty.");
     return E_INVALIDARG;
   }
-  if (!VertexShaderData) {
+
+  if (!vertexShaderData) {
     ERROR("InputLayout", "init", "VertexShaderData is nullptr.");
     return E_POINTER;
   }
 
-  HRESULT hr = device.CreateInputLayout(Layout.data(),
-                                        static_cast<unsigned int>(Layout.size()),
-                                        VertexShaderData->GetBufferPointer(),
-                                        VertexShaderData->GetBufferSize(),
-                                        &m_inputLayout);
+  HRESULT hr = device.CreateInputLayout(layoutDesc, layoutCount,
+    vertexShaderData->GetBufferPointer(),
+    vertexShaderData->GetBufferSize(),
+    &m_inputLayout);
 
   if (FAILED(hr)) {
     ERROR("InputLayout", "init",
       ("Failed to create InputLayout. HRESULT: " + std::to_string(hr)).c_str());
-      return hr;
-    }
+    return hr;
+  }
 
   return S_OK;
-  }
+}
 
 void
 InputLayout::update() {
-  //Metodo vacio para caundo se necesite cambios dinamicos
+  // Método vacío, se puede utilizar en caso de necesitar cambios dinámicos en el layout
 }
 
 void
 InputLayout::render(DeviceContext& deviceContext) {
   if (!m_inputLayout) {
     ERROR("InputLayout", "render", "InputLayout is nullptr");
-     
     return;
   }
+
   deviceContext.m_deviceContext->IASetInputLayout(m_inputLayout);
 }
 

@@ -14,6 +14,9 @@ Device;
 class
 DeviceContext;
 
+class
+LayoutBuilder;
+
 /**
  * @class ShaderProgram
  * @brief Clase encargada de manejar la inicialización, compilación,
@@ -43,7 +46,7 @@ public:
   HRESULT
   init(Device& device,
       const std::string& fileName,
-      std::vector < D3D11_INPUT_ELEMENT_DESC> Layout);
+      LayoutBuilder layoutBuilder);
 
   /**
    * @brief Actualiza los parámetros o recursos del shader si es necesario.
@@ -80,7 +83,7 @@ public:
    */
   HRESULT
   CreateInputLayout(Device& device,
-                    std::vector<D3D11_INPUT_ELEMENT_DESC> Layout);
+                    LayoutBuilder layoutBuilder);
 
   /**
    * @brief Crea un shader del tipo especificado.

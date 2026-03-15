@@ -9,6 +9,8 @@
 #include "DepthStencilState.h"
 #include "EngineUtilities\Utilities\Camera.h"
 #include "ECS\Actor.h"
+#include "EngineUtilities\Utilities\LayoutBuilder.h"
+
 
 class Device;
 class DeviceContext;

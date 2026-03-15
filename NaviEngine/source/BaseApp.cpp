@@ -67,7 +67,8 @@ int BaseApp::run(HINSTANCE hInst, int nCmdShow) {
   return (int)msg.wParam;
 }
 
-HRESULT BaseApp::init() {
+HRESULT 
+BaseApp::init() {
   HRESULT hr = S_OK;
 
   // 1. SwapChain
@@ -163,29 +164,25 @@ HRESULT BaseApp::init() {
     return E_FAIL;
   }
 
-  
-
   // Store the Actors in the Scene Graph
   for (auto& actor : m_actors) {
     m_sceneGraph.addEntity(actor.get());
   }
 
+  LayoutBuilder builder;
 
-  // Define the input layout
-  std::vector<D3D11_INPUT_ELEMENT_DESC> Layout;
-  D3D11_INPUT_ELEMENT_DESC position = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 };
-  Layout.push_back(position);
-
-  D3D11_INPUT_ELEMENT_DESC texcoord = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 };
-  Layout.push_back(texcoord);
-
-  D3D11_INPUT_ELEMENT_DESC normal = { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 };
-  Layout.push_back(normal);
+  builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
+         //.Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+         //.Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+         //.Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+         .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+ 
 
   // Create the Shader Program
-  hr = m_shaderProgram.init(m_device, "NaviEngine.fx", Layout);
+  hr = m_shaderProgram.init(m_device, "NaviEngine.fx", builder);
   if (FAILED(hr)) {
-    ERROR("Main", "InitDevice", ("Failed to initialize ShaderProgram. HRESULT: " + std::to_string(hr)).c_str());
+    ERROR("Main", "InitDevice",
+      ("Failed to initialize ShaderProgram. HRESULT: " + std::to_string(hr)).c_str());
     return hr;
   }
 
