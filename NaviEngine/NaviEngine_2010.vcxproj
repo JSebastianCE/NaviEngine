@@ -469,9 +469,6 @@
     <ClCompile Include="source\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="NaviEngine.fx" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Imgui\imgui-docking\backends\imgui_impl_dx11.h" />
     <ClInclude Include="Imgui\imgui-docking\backends\imgui_impl_win32.h" />
     <ClInclude Include="Imgui\imgui-docking\imconfig.h" />
@@ -532,6 +529,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="bin\NaviEngine.fx" />
+    <None Include="bin\PBRShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

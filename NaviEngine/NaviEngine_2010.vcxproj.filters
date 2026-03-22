@@ -208,10 +208,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="NaviEngine.fx">
+    <None Include="bin\Skybox.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="bin\Skybox.hlsl">
+    <None Include="bin\PBRShader.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
@@ -320,5 +320,10 @@
     <ClCompile Include="source\DepthStencilState.cpp">
       <Filter>source</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="bin\NaviEngine.fx">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

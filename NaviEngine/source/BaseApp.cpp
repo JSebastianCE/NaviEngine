@@ -135,11 +135,36 @@ BaseApp::init() {
 
     // RUTA DE TEXTURA (Tu ruta)
     hr = m_cyberGunAlbedo.init(m_device, "Assets/T_Golden_double_Axe_D", ExtensionType::JPG);
-
     if (FAILED(hr)) {
       ERROR("Main", "InitDevice", ("Failed to initialize cyberGunAlbedo. HRESULT: " + std::to_string(hr)).c_str());
       return hr;
     }
+
+    hr = m_MetallicSRV.init(m_device, "Assets/T_Golden_double_Axe_M", ExtensionType::JPG);
+    if (FAILED(hr)) {
+      ERROR("Main", "InitDevice", ("Failed to initialize cyberGunAlbedo. HRESULT: " + std::to_string(hr)).c_str());
+      return hr;
+    }
+
+    hr = m_RoughnessSRV.init(m_device, "Assets/T_Golden_double_Axe_R", ExtensionType::JPG);
+    if (FAILED(hr)) {
+      ERROR("Main", "InitDevice", ("Failed to initialize cyberGunAlbedo. HRESULT: " + std::to_string(hr)).c_str());
+      return hr;
+    }
+
+    hr = m_AOSRV.init(m_device, "Assets/T_Golden_double_Axe_AO", ExtensionType::JPG);
+    if (FAILED(hr)) {
+      ERROR("Main", "InitDevice", ("Failed to initialize cyberGunAlbedo. HRESULT: " + std::to_string(hr)).c_str());
+      return hr;
+    }
+
+    hr = m_NormalSRV.init(m_device, "Assets/T_Golden_double_Axe_N", ExtensionType::JPG);
+    if (FAILED(hr)) {
+      ERROR("Main", "InitDevice", ("Failed to initialize cyberGunAlbedo. HRESULT: " + std::to_string(hr)).c_str());
+      return hr;
+    }
+
+
     cyberGunTextures.push_back(m_cyberGunAlbedo);
 
     m_cyberGun->setMesh(m_device, cyberGunMeshes);
@@ -187,23 +212,10 @@ BaseApp::init() {
   }
 
   // Create the constant buffers
-  hr = m_cbNeverChanges.init(m_device, sizeof(CBNeverChanges));
+  hr = m_constantBuffer.init(m_device, sizeof(CBMain));
   if (FAILED(hr)) {
     ERROR("Main", "InitDevice",
-      ("Failed to initialize NeverChanges Buffer. HRESULT: " + std::to_string(hr)).c_str());
-    return hr;
-  }
-
-  hr = m_cbChangeOnResize.init(m_device, sizeof(CBChangeOnResize));
-  if (FAILED(hr)) {
-    ERROR("Main", "InitDevice",
-      ("Failed to initialize ChangeOnResize Buffer. HRESULT: " + std::to_string(hr)).c_str());
-    return hr;
-  }
-
-  hr = m_cbChangesEveryFrame.init(m_device, sizeof(CBChangesEveryFrame));
-  if (FAILED(hr)) {
-    ERROR("Main", "InitDevice", "Failed to init ChangesEveryFrame Buffer.");
+      ("Failed to initialize m_constantBuffer Buffer. HRESULT: " + std::to_string(hr)).c_str());
     return hr;
   }
 
@@ -211,8 +223,8 @@ BaseApp::init() {
   m_camera.setLens(XM_PIDIV4, m_window.m_width / (float)m_window.m_height, 0.01f, 100.0f);
   m_camera.setPosition(0.0f, 3.0f, -6.0f);
 
-  cbNeverChanges.mView = XMMatrixTranspose(m_camera.getView());
-  cbChangesOnResize.mProjection = XMMatrixTranspose(m_camera.getProj());
+  m_constantBufferStruct.LightColor = EU::Vector3(1.0f, 1.0f, 1.0f);
+  m_constantBufferStruct.LightDir = EU::Vector3(-0.20f, -1.0f, 1.0f);
 
   //Initialize Skybox
   m_skybox.init(m_device, &m_deviceContext, m_skyboxTex);
@@ -231,7 +243,6 @@ BaseApp::init() {
       ("Failed to initialize default DepthStencilState. HRESULT: " + std::to_string(hr)).c_str());
     return hr;
   }
-
 
   return S_OK;
 }
@@ -300,19 +311,25 @@ void BaseApp::update(float deltaTime) {
 
 
   // 3. Update Camera & Projection Matrices
-  m_camera.updateViewMatrix();
-  cbNeverChanges.mView = XMMatrixTranspose(m_camera.getView());
-  m_cbNeverChanges.update(m_deviceContext, nullptr, 0, nullptr, &cbNeverChanges, 0, 0);
-  m_cbChangeOnResize.update(m_deviceContext, nullptr, 0, nullptr, &cbChangesOnResize, 0, 0);
-  //cbChangesOnResize.mProjection = XMMatrixTranspose(m_camera.getProj());
+  m_camera.updateViewMatrix(); 
 
+  XMStoreFloat4x4(&m_constantBufferStruct.View, XMMatrixTranspose(m_camera.getView()));
+  XMStoreFloat4x4(&m_constantBufferStruct.Projection, XMMatrixTranspose(m_camera.getProj()));
+  m_constantBufferStruct.CameraPos = m_camera.getPosition();
+
+  // Luz blanca fuerte
+  m_gui.vec3Control("Light Direction", &m_constantBufferStruct.LightDir.x, 0.1f);
+  m_gui.vec3Control("Light Color", &m_constantBufferStruct.LightColor.x, 0.1f);
+
+  // Update Skybox Pass -> Solo necesita la vista sin traslacion + proyeccion para funcionar correctamente (ver metodo update de Skybox)
+  m_skybox.update(m_deviceContext, m_camera);
+
+  // Update constant buffer for Scene Pass
+  m_constantBuffer.update(m_deviceContext, nullptr, 0, nullptr, &m_constantBufferStruct, 0, 0);
 
   // 4. Update Actors logic
   m_sceneGraph.update(deltaTime, m_deviceContext);
-
 }
-
-
 
 void 
 BaseApp::render() {
@@ -324,7 +341,7 @@ BaseApp::render() {
   m_depthStencilView.render(m_deviceContext);
 
   // 1. Skybox Pass
-  m_skybox.render(m_deviceContext, m_camera);
+  m_skybox.render(m_deviceContext);
 
   // 2. Restaurar estados + pipeline de la escena
   m_defaultRasterizer.render(m_deviceContext);
@@ -339,12 +356,15 @@ BaseApp::render() {
   m_shaderProgram.render(m_deviceContext);
 
   //CBs para VS (view/proj)
-  m_cbNeverChanges.render(m_deviceContext, 0, 1); // slot 0 para never changes
-  m_cbChangeOnResize.render(m_deviceContext, 1, 1); // slot 1 para resize
-
+  m_constantBuffer.render(m_deviceContext, 0, 1, true);
 
   // 3. Scene pass
   m_sceneGraph.render(m_deviceContext);
+
+  // 2) Volver al backbuffer principal
+  m_renderTargetView.render(m_deviceContext, m_depthStencilView, 1, ClearColor);
+  m_viewport.render(m_deviceContext);
+  m_depthStencilView.render(m_deviceContext);
 
 
   // 4. Render UI (Always last before present)
@@ -359,8 +379,8 @@ BaseApp::destroy() {
   if (m_deviceContext.m_deviceContext) m_deviceContext.m_deviceContext->ClearState();
 
   m_sceneGraph.destroy();
-  m_cbNeverChanges.destroy();
-  m_cbChangeOnResize.destroy();
+  //m_cbNeverChanges.destroy();
+  //m_cbChangeOnResize.destroy();
   m_shaderProgram.destroy();
   m_depthStencil.destroy();
   m_depthStencilView.destroy();

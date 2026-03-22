@@ -83,9 +83,11 @@
     */
 struct 
 SimpleVertex{
-  XMFLOAT3 Pos;  /**< Coordenadas de posición del vértice (x, y, z). */
-  XMFLOAT2 Tex;  /**< Coordenadas de textura (u, v). */
-  XMFLOAT3 Normal; /**< Vector normal del vértice (para iluminación). */ 
+  EU::Vector3 Position;  /**< Coordenadas de posición del vértice (x, y, z). */
+  EU::Vector3 Normal;  /**< Coordenadas de textura (u, v). */
+  EU::Vector3 Tangent; /**< Vector normal del vértice (para iluminación). */
+  EU::Vector3 Bitangent; /**< Vector tangente del vértice (para iluminación). */
+  EU::Vector2 TextureCoordinate; /**< Vector bitangente del vértice (para iluminación). */
 };
 
 struct
@@ -123,6 +125,20 @@ struct
 CBChangeOnResize{
   XMMATRIX mProjection; /**< Matriz de proyección ajustada al tamaño de la ventana. */
 };
+
+struct CBMain
+{
+  //XMOFLOAT4X4 World;
+  XMFLOAT4X4 View;
+  XMFLOAT4X4 Projection;
+  EU::Vector3 CameraPos;
+  float pad0;
+  EU::Vector3 LightDir;
+  float pad1;
+  EU::Vector3 LightColor;
+  float pad2;
+};
+
 
 /**
  * @brief Constantes que cambian en cada frame.

@@ -25,6 +25,7 @@
 #include "EngineUtilities\Utilities\Skybox.h"
 
 #include "EngineUtilities\Utilities\LayoutBuilder.h"
+#include "EngineUtilities/Utilities/EditorViewportPass.h"
 
 class
 BaseApp {
@@ -79,16 +80,17 @@ private:
 
   bool m_d3dReady = false;
   Buffer                              m_constantBuffer;
+  CBMain                              m_constantBufferStruct;
 
   //Textures
-  //Texture m_AlbedoSRV;
-  //Texture m_MetallicSRV;
-  //Texture m_RoughnessSRV;
-  //Texture m_AOSRV;
-  //Texture m_NormalSRV;
+  Texture m_AlbedoSRV;
+  Texture m_MetallicSRV;
+  Texture m_RoughnessSRV;
+  Texture m_AOSRV;
+  Texture m_NormalSRV;
 
-  Buffer                              m_cbNeverChanges;
-  Buffer                              m_cbChangeOnResize;
+  //Buffer                              m_cbNeverChanges;
+  //Buffer                              m_cbChangeOnResize;
   Buffer                              m_cbChangesEveryFrame;
 
   Texture                             m_cyberGunAlbedo;      // Tu textura especifica
