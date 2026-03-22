@@ -1,11 +1,30 @@
 #pragma once
 #include "Prerequisites.h"
 
-class 
-LayoutBuilder
+/**
+ * @class LayoutBuilder
+ * @brief Facilita la construcción de descripciones de layout de entrada para Direct3D.
+ *
+ * Permite agregar elementos de entrada (input elements) de manera encadenada,
+ * soportando tanto datos por vértice como por instancia.
+ */
+class
+  LayoutBuilder
 {
 public:
   // **Add() base** (per-vertex por defecto)
+  /**
+   * @brief Agrega un elemento de layout de entrada por vértice.
+   *
+   * @param semantic Nombre semántico del elemento (ej. POSITION, NORMAL).
+   * @param format Formato de datos (DXGI_FORMAT).
+   * @param semanticIndex Índice semántico.
+   * @param inputSlot Slot de entrada.
+   * @param alignedByteOffset Offset en bytes alineado.
+   * @param slotClass Clasificación del slot (por vértice o por instancia).
+   * @param instanceStepRate Frecuencia de avance para instancing.
+   * @return LayoutBuilder& Referencia al builder para encadenamiento.
+   */
   LayoutBuilder& Add(
     const char* semantic,
     DXGI_FORMAT format,
@@ -28,6 +47,17 @@ public:
   }
 
   // Atajo para instancing
+  /**
+   * @brief Agrega un elemento de layout para datos por instancia.
+   *
+   * @param semantic Nombre semántico del elemento.
+   * @param format Formato de datos.
+   * @param semanticIndex Índice semántico.
+   * @param inputSlot Slot de entrada (por defecto 1).
+   * @param alignedByteOffset Offset en bytes alineado.
+   * @param instanceStepRate Frecuencia de avance por instancia.
+   * @return LayoutBuilder& Referencia al builder para encadenamiento.
+   */
   LayoutBuilder& AddInstance(
     const char* semantic,
     DXGI_FORMAT format,
@@ -40,9 +70,23 @@ public:
       D3D11_INPUT_PER_INSTANCE_DATA, instanceStepRate);
   }
 
+  /**
+   * @brief Obtiene la lista de elementos del layout.
+   *
+   * @return Referencia constante al vector de descriptores.
+   */
   const std::vector<D3D11_INPUT_ELEMENT_DESC>& Get() const { return m_elems; }
+
+  /**
+   * @brief Obtiene la cantidad de elementos en el layout.
+   *
+   * @return UINT Número de elementos.
+   */
   UINT Count() const { return (UINT)m_elems.size(); }
 
 private:
+  /**
+   * @brief Contenedor de descriptores de elementos de entrada.
+   */
   std::vector<D3D11_INPUT_ELEMENT_DESC> m_elems;
 };

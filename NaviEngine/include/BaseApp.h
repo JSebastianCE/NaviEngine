@@ -25,7 +25,6 @@
 #include "EngineUtilities\Utilities\Skybox.h"
 
 #include "EngineUtilities\Utilities\LayoutBuilder.h"
-#include "EngineUtilities/Utilities/EditorViewportPass.h"
 
 class
 BaseApp {

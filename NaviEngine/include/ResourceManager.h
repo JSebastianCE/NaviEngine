@@ -3,22 +3,58 @@
 #include "Prerequisites.h"
 #include "IResource.h"
 
+/**
+ * @class ResourceManager
+ * @brief Gestiona la carga, almacenamiento y liberación de recursos.
+ *
+ * Implementa el patrón Singleton y actúa como caché de recursos utilizando
+ * el patrón Flyweight para evitar duplicación de instancias.
+ */
 class
-	ResourceManager {
+ResourceManager {
 public:
+	/**
+	 * @brief Constructor por defecto.
+	 */
 	ResourceManager() = default;
+
+	/**
+	 * @brief Destructor por defecto.
+	 */
 	~ResourceManager() = default;
 
 	// Singleton
+	/**
+	 * @brief Obtiene la instancia única del ResourceManager.
+	 *
+	 * @return Referencia a la instancia singleton.
+	 */
 	static ResourceManager& getInstance() {
 		static ResourceManager instance;
 		return instance;
 	}
 
+	/**
+	 * @brief Constructor de copia eliminado.
+	 */
 	ResourceManager(const ResourceManager&) = delete;
+
+	/**
+	 * @brief Operador de asignación eliminado.
+	 */
 	ResourceManager& operator=(const ResourceManager&) = delete;
 
 	/// Obtener o cargar un recurso de tipo T (T debe heredar de IResource).
+	/**
+	 * @brief Obtiene un recurso del caché o lo carga si no existe.
+	 *
+	 * @tparam T Tipo de recurso (debe heredar de IResource).
+	 * @tparam Args Argumentos adicionales para la construcción del recurso.
+	 * @param key Identificador único del recurso.
+	 * @param filename Ruta del archivo a cargar.
+	 * @param args Argumentos adicionales.
+	 * @return std::shared_ptr<T> Recurso cargado o existente.
+	 */
 	template<typename T, typename... Args>
 	std::shared_ptr<T> GetOrLoad(const std::string& key,
 		const std::string& filename,
@@ -53,6 +89,13 @@ public:
 	}
 
 	/// Obtener un recurso ya cargado, sin cargarlo si no existe.
+	/**
+	 * @brief Obtiene un recurso ya cargado desde el caché.
+	 *
+	 * @tparam T Tipo de recurso.
+	 * @param key Identificador del recurso.
+	 * @return std::shared_ptr<T> Recurso encontrado o nullptr si no existe.
+	 */
 	template<typename T>
 	std::shared_ptr<T> Get(const std::string& key) const
 	{
@@ -63,7 +106,13 @@ public:
 	}
 
 	/// Liberar un recurso específico
-	void Unload(const std::string& key)
+	/**
+	 * @brief Libera un recurso específico del caché.
+	 *
+	 * @param key Identificador del recurso.
+	 */
+	void
+	Unload(const std::string& key)
 	{
 		auto it = m_resources.find(key);
 		if (it != m_resources.end()) {
@@ -73,7 +122,11 @@ public:
 	}
 
 	/// Liberar todos los recursos
-	void UnloadAll()
+	/**
+	 * @brief Libera todos los recursos almacenados en el caché.
+	 */
+	void 
+	UnloadAll()
 	{
 		for (auto& [key, res] : m_resources) {
 			if (res) {
@@ -84,5 +137,10 @@ public:
 	}
 
 private:
+	/**
+	 * @brief Contenedor de recursos cargados.
+	 *
+	 * Mapea una clave única a una instancia compartida de IResource.
+	 */
 	std::unordered_map<std::string, std::shared_ptr<IResource>> m_resources;
 };
