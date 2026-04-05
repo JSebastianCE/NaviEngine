@@ -9,70 +9,70 @@
 //
 HRESULT
 DepthStencilView::init(Device& device, Texture& depthStencil, DXGI_FORMAT format) {
-  //
-  // Verificación de errores: se asegura de que los punteros y el formato sean válidos.
-  // Si algo es nulo o desconocido, se devuelve un error para evitar problemas.
-  //
-  if (!device.m_device) {
-    ERROR("DepthStencilView", "init", "Device is null.");
-    return E_POINTER;
-  }
-  if (!depthStencil.m_texture) {
-    ERROR("DepthStencilView", "init", "texture is null.");
-    return E_POINTER;
-  }
-  if (format == DXGI_FORMAT_UNKNOWN) {
-    ERROR("DepthStencilView", "init", "Format is DXGI_FORMAT_UNKNOWN.");
-    return E_INVALIDARG;
-  }
+	if (!device.m_device) {
+		ERROR("DepthStencilView", "init", "Device is null.");
+	}
+	if (!depthStencil.m_texture) {
+		ERROR("DepthStencilView", "init", "Texture is null.");
+		return E_FAIL;
+	}
 
-  //
-  // Se obtiene la descripción de la textura para saber si es una textura multimuestreo.
-  // Esto es importante para configurar correctamente el tipo de vista.
-  //
-  D3D11_TEXTURE2D_DESC texDesc;
-  depthStencil.m_texture->GetDesc(&texDesc);
+	// Config depth stencil view description
+	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
+	memset(&descDSV, 0, sizeof(descDSV));
+	descDSV.Format = format;
+	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+	descDSV.Texture2D.MipSlice = 0;
 
-  //
-  // Se configura la estructura que describe la vista de profundidad/plantilla.
-  // Se usa ZeroMemory para limpiar la estructura antes de llenarla.
-  //
-  D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
-  ZeroMemory(&descDSV, sizeof(descDSV));
-  descDSV.Format = format;
+	// Create depth stencil view
+	HRESULT hr = device.m_device->CreateDepthStencilView(depthStencil.m_texture,
+		&descDSV,
+		&m_depthStencilView);
 
-  //
-  // Si la textura tiene más de una muestra, se configura como una vista multimuestreo.
-  // De lo contrario, se usa una vista 2D estándar con el primer mipmap.
-  //
-  if (texDesc.SampleDesc.Count > 1) {
-    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-  }
-  else {
-    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-    descDSV.Texture2D.MipSlice = 0;
-  }
+	if (FAILED(hr)) {
+		ERROR("DepthStencilView", "init",
+			("Failed to create depth stencil view. HRESULT: " + std::to_string(hr)).c_str());
+		return hr;
+	}
 
-  //
-  // Se crea la vista de profundidad/plantilla usando la descripción.
-  // Si la creación falla, se devuelve el código de error.
-  //
-  HRESULT hr = device.m_device->
-    CreateDepthStencilView(depthStencil.m_texture,
-                           &descDSV,
-                           &m_depthStencilView);
+	return S_OK;
+}
 
-  if (FAILED(hr)) {
-    ERROR("DepthStencilView", "init",
-      ("Failed to create depth stencil view. HRESULT: " + std::to_string(hr)).c_str());
-    return hr;
-  }
+HRESULT
+DepthStencilView::init(Device& device,
+	Texture& depthStencil,
+	DXGI_FORMAT format,
+	D3D11_DSV_DIMENSION viewDimension) {
+	if (!device.m_device) {
+		ERROR("DepthStencilView", "init", "Device is null.");
+		return E_POINTER;
+	}
+	if (!depthStencil.m_texture) {
+		ERROR("DepthStencilView", "init", "Texture is null.");
+		return E_FAIL;
+	}
 
-  //
-  // Mensaje de éxito si la vista se crea correctamente.
-  //
-  MESSAGE("DepthStencilView", "init", "Depth stencil view created successfully.");
-  return S_OK;
+	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV{};
+	descDSV.Format = format;
+	descDSV.ViewDimension = viewDimension;
+
+	if (viewDimension == D3D11_DSV_DIMENSION_TEXTURE2D) {
+		descDSV.Texture2D.MipSlice = 0;
+	}
+
+	HRESULT hr = device.m_device->CreateDepthStencilView(
+		depthStencil.m_texture,
+		&descDSV,
+		&m_depthStencilView
+	);
+
+	if (FAILED(hr)) {
+		ERROR("DepthStencilView", "init",
+			("Failed to create depth stencil view. HRESULT: " + std::to_string(hr)).c_str());
+		return hr;
+	}
+
+	return S_OK;
 }
 
 //

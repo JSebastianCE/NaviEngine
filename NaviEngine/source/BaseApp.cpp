@@ -38,7 +38,7 @@ int BaseApp::run(HINSTANCE hInst, int nCmdShow) {
   }
 
   // 4) Initialize GUI (Igual que el profesor, antes del loop)
-  m_gui.init(m_window.m_hWnd, m_device.m_device, m_deviceContext.m_deviceContext);
+  m_gui.init(m_window, m_device, m_deviceContext);
 
   // Main message loop
   MSG msg = {};
@@ -166,6 +166,11 @@ BaseApp::init() {
 
 
     cyberGunTextures.push_back(m_cyberGunAlbedo);
+    cyberGunTextures.push_back(m_NormalSRV);
+    cyberGunTextures.push_back(m_MetallicSRV);
+    cyberGunTextures.push_back(m_RoughnessSRV);
+    cyberGunTextures.push_back(m_AOSRV);
+
 
     m_cyberGun->setMesh(m_device, cyberGunMeshes);
     m_cyberGun->setTextures(cyberGunTextures);
@@ -182,6 +187,7 @@ BaseApp::init() {
         EU::Vector3(-90.0f, 0.0f, 0.0f),
         EU::Vector3(0.30f, 0.30f, 0.3f)      // Escala 0.3 (Pequeña)
       );
+      t->rebuildMatrixFromVectors();
     }
   }
   else {
@@ -197,14 +203,14 @@ BaseApp::init() {
   LayoutBuilder builder;
 
   builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
-         //.Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
-         //.Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
-         //.Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+         .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+         .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+         .Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
          .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
  
 
   // Create the Shader Program
-  hr = m_shaderProgram.init(m_device, "NaviEngine.fx", builder);
+  hr = m_shaderProgram.init(m_device, "PBRShader.hlsl", builder);
   if (FAILED(hr)) {
     ERROR("Main", "InitDevice",
       ("Failed to initialize ShaderProgram. HRESULT: " + std::to_string(hr)).c_str());
@@ -244,6 +250,12 @@ BaseApp::init() {
     return hr;
   }
 
+  hr = m_editorViewportPass.init(m_device, 1280, 720);
+  if (FAILED(hr)) {
+    ERROR("Main", "InitDevice", ("Failed to initialize EditorViewportPass. HRESULT: " + std::to_string(hr)).c_str());
+    return hr;
+  }
+
   return S_OK;
 }
 
@@ -260,117 +272,117 @@ void BaseApp::update(float deltaTime) {
     t = (dwTimeCur - dwTimeStart) / 1000.0f;
   }
 
-  // 2. UI Updates (Exactamente como el profesor)
-  m_gui.update();
+  // 2. UI Updates
+  // CAMBIO 1: Agregamos m_viewport y m_window como pide el código del profe
+  m_gui.update(m_viewport, m_window);
+
+  // Dibuja la pantalla del juego dentro del panel de ImGui
+  m_gui.drawViewportPanel(m_editorViewportPass.getSRV());
 
   // Panel de Jerarquía
   m_gui.outliner(m_actors);
 
-
-  // Shot cubemap on imgui image
-  static ID3D11ShaderResourceView* faceSRV[6] = { nullptr };
-
-  if (!faceSRV[0]) {
-    for (UINT i = 0; i < 6; ++i) {
-      faceSRV[i] = m_skyboxTex.CreateCubemapFaceSRV(m_device.m_device, m_skyboxTex.m_texture,
-        DXGI_FORMAT_R8G8B8A8_UNORM, i, 1);
-    }
-  }
-
-  ImGui::Text("Cubemap Faces:");
-  const float thumb = 128.0f;
-
-  for (int i = 0; i < 6; ++i) {
-    ImGui::Image((ImTextureID)faceSRV[i], ImVec2(thumb, thumb));
-    if ((i % 3) != 2) ImGui::SameLine();
-  }
-  ImGui::Begin("Cubemap");
-  ImGui::Text("Skybox Cubemap");
-  ImGui::Image((void*)m_skyboxTex.m_textureFromImg,
-    ImVec2(256, 256),
-    ImVec2(0, 0),
-    ImVec2(1, 1));
-  ImGui::End();
-
   // Validar si hay un actor seleccionado antes de mostrar inspector o gizmos
- 
-
-// Validar si hay un actor seleccionado
-  if (m_gui.selectedActorIndex >= 0 &&
-    m_gui.selectedActorIndex < m_actors.size()) {
-
+  if (m_gui.selectedActorIndex >= 0 && m_gui.selectedActorIndex < m_actors.size()) {
     auto& selectedActor = m_actors[m_gui.selectedActorIndex];
 
-    // 1. Muestra los valores numéricos en la ventana gris
+    // Muestra los valores numéricos en la ventana gris
     m_gui.inspectorGeneral(selectedActor);
 
-    // 2. Dibuja las FLECHAS 3D sobre el objeto en la escena principal
-    // (Solo una llamada es necesaria)
-    m_gui.editTransform(m_camera.getView(), m_camera.getProj(), selectedActor);
+    // Dibuja las FLECHAS 3D sobre el objeto en la escena
+    // CAMBIO 2: Pasamos la cámara completa y la ventana, como dicta tu nuevo GUI.h
+    m_gui.editTransform(m_camera, m_window, selectedActor);
   }
 
+  // --- 3. LÓGICA DE REDIMENSIONAMIENTO DEL VIEWPORT ---
+  unsigned int desiredW = static_cast<unsigned int>(m_gui.m_viewportSize.x);
+  unsigned int desiredH = static_cast<unsigned int>(m_gui.m_viewportSize.y);
 
-  // 3. Update Camera & Projection Matrices
-  m_camera.updateViewMatrix(); 
+  const unsigned int kMinViewportSize = 64;
+
+  if (desiredW < kMinViewportSize) desiredW = kMinViewportSize;
+  if (desiredH < kMinViewportSize) desiredH = kMinViewportSize;
+
+  // Si cambió el tamaño solicitado, reinicia la estabilidad
+  if (desiredW != m_lastRequestedViewportWidth || desiredH != m_lastRequestedViewportHeight) {
+    m_lastRequestedViewportWidth = desiredW;
+    m_lastRequestedViewportHeight = desiredH;
+    m_viewportResizeStableFrames = 0;
+  }
+  else {
+    // El tamaño ya no cambió este frame
+    m_viewportResizeStableFrames++;
+  }
+
+  // Solo marcar resize cuando el tamaño se haya mantenido estable
+  const int kStableFramesRequired = 2;
+  if (m_viewportResizeStableFrames >= kStableFramesRequired) {
+    if (desiredW != m_editorViewportPass.getWidth() || desiredH != m_editorViewportPass.getHeight()) {
+      m_editorViewportResizePending = true;
+      m_pendingViewportWidth = desiredW;
+      m_pendingViewportHeight = desiredH;
+    }
+  }
+  
+  // 4. Update Camera & Projection Matrices
+  m_camera.updateViewMatrix();
 
   XMStoreFloat4x4(&m_constantBufferStruct.View, XMMatrixTranspose(m_camera.getView()));
   XMStoreFloat4x4(&m_constantBufferStruct.Projection, XMMatrixTranspose(m_camera.getProj()));
   m_constantBufferStruct.CameraPos = m_camera.getPosition();
 
-  // Luz blanca fuerte
+  // Controles de luz en la UI
   m_gui.vec3Control("Light Direction", &m_constantBufferStruct.LightDir.x, 0.1f);
   m_gui.vec3Control("Light Color", &m_constantBufferStruct.LightColor.x, 0.1f);
 
-  // Update Skybox Pass -> Solo necesita la vista sin traslacion + proyeccion para funcionar correctamente (ver metodo update de Skybox)
+  // 5. Update Skybox Pass 
+  // Solo necesita la vista sin traslacion + proyeccion para funcionar correctamente
   m_skybox.update(m_deviceContext, m_camera);
 
-  // Update constant buffer for Scene Pass
+  // 6. Update constant buffer for Scene Pass
   m_constantBuffer.update(m_deviceContext, nullptr, 0, nullptr, &m_constantBufferStruct, 0, 0);
 
-  // 4. Update Actors logic
+  // 7. Update Actors logic
   m_sceneGraph.update(deltaTime, m_deviceContext);
 }
 
 void 
 BaseApp::render() {
-  // Clear Targets
+  handleEditorViewportResize(); // Revisa si hay que cambiar el tamaño
+
   float ClearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-  m_renderTargetView.render(m_deviceContext, m_depthStencilView, 1, ClearColor);
+  const float viewportClear[4] = { 0.10f, 0.10f, 0.10f, 1.0f };
 
-  m_viewport.render(m_deviceContext);
-  m_depthStencilView.render(m_deviceContext);
+  // 1) DIBUJAR AL VIEWPORT PASS (Tu ventana del editor)
+  m_editorViewportPass.begin(m_deviceContext, viewportClear);
+  m_editorViewportPass.setViewport(m_deviceContext);
+  m_editorViewportPass.clearDepth(m_deviceContext);
 
-  // 1. Skybox Pass
+  // A. Skybox
   m_skybox.render(m_deviceContext);
 
-  // 2. Restaurar estados + pipeline de la escena
+  // B. Restaurar estados (FUNDAMENTAL PARA NO ROMPER LA ESCENA)
   m_defaultRasterizer.render(m_deviceContext);
   m_defaultDepthStencil.render(m_deviceContext, 0, false);
 
-  // limpiar SRVs por seguridad
+  // C. Limpiar SRVs por seguridad (ESTO SOLUCIONA TU ERROR DE TEXTURE2D vs TEXTURECUBE)
   ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
   m_deviceContext.m_deviceContext->PSSetShaderResources(10, 1, nullSRV);
   m_deviceContext.m_deviceContext->PSSetShaderResources(0, 1, nullSRV);
 
-  // Re-binda shader/layout de escena
+  // D. Scene Pass (El Hacha)
   m_shaderProgram.render(m_deviceContext);
-
-  //CBs para VS (view/proj)
   m_constantBuffer.render(m_deviceContext, 0, 1, true);
-
-  // 3. Scene pass
   m_sceneGraph.render(m_deviceContext);
 
-  // 2) Volver al backbuffer principal
+  // 2) VOLVER AL BACKBUFFER PRINCIPAL (Pantalla completa)
   m_renderTargetView.render(m_deviceContext, m_depthStencilView, 1, ClearColor);
   m_viewport.render(m_deviceContext);
   m_depthStencilView.render(m_deviceContext);
 
-
-  // 4. Render UI (Always last before present)
+  // 3) GUI (Se dibuja encima del BackBuffer y contiene la imagen del Viewport)
   m_gui.render();
 
-  // 5. Present
   m_swapChain.present();
 }
 
@@ -379,6 +391,7 @@ BaseApp::destroy() {
   if (m_deviceContext.m_deviceContext) m_deviceContext.m_deviceContext->ClearState();
 
   m_sceneGraph.destroy();
+  m_editorViewportPass.destroy();
   //m_cbNeverChanges.destroy();
   //m_cbChangeOnResize.destroy();
   m_shaderProgram.destroy();
@@ -487,3 +500,26 @@ BaseApp::onResize(UINT newW, UINT newH)
 
 }
 
+void BaseApp::handleEditorViewportResize()
+{
+  if (!m_editorViewportResizePending)
+    return;
+
+  // Desbindear antes de tocar recursos
+  m_deviceContext.m_deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+  ID3D11ShaderResourceView* nullSRVs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT] = {};
+  m_deviceContext.m_deviceContext->PSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, nullSRVs);
+
+  // Crear pass temporal nuevo
+  EditorViewportPass newPass;
+  HRESULT hr = newPass.init(m_device, m_pendingViewportWidth, m_pendingViewportHeight);
+  if (FAILED(hr)) {
+    m_editorViewportResizePending = false;
+    return;
+  }
+
+  // Intercambio seguro
+  m_editorViewportPass.swap(newPass);
+  m_editorViewportResizePending = false;
+}

@@ -76,7 +76,10 @@ public:
    * @param newPos Nueva posición en espacio mundo.
    */
   void
-  setPosition(const EU::Vector3& newPos) { position = newPos; }
+  setPosition(const EU::Vector3& newPos) { 
+    position = newPos;
+    rebuildMatrixFromVectors();
+  }
 
   /**
    * @brief Obtiene la rotación actual.
@@ -92,7 +95,11 @@ public:
    * @param newRot Nueva rotación en grados (Pitch, Yaw, Roll).
    */
   void
-  setRotation(const EU::Vector3& newRot) { rotation = newRot; }
+  setRotation(const EU::Vector3& newRot) {
+    rotation = newRot; 
+    rebuildMatrixFromVectors();
+  
+  }
 
   /**
    * @brief Obtiene la escala actual.
@@ -108,7 +115,10 @@ public:
    * @param newScale Nueva escala por eje.
    */
   void
-  setScale(const EU::Vector3& newScale) { scale = newScale; }
+  setScale(const EU::Vector3& newScale) {
+    scale = newScale;
+    rebuildMatrixFromVectors();
+  }
 
   /**
    * @brief Establece posición, rotación y escala simultáneamente.
@@ -124,6 +134,7 @@ public:
     position = newPos;
     rotation = newRot;
     scale = newSca;
+    rebuildMatrixFromVectors();
   }
 
   /**
@@ -183,4 +194,6 @@ public:
    * Puede ser modificada externamente (ej. ImGuizmo).
    */
   XMMATRIX matrix;
+
+  XMMATRIX worldMatrix;
 };

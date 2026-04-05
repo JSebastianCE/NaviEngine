@@ -183,16 +183,17 @@ ShaderProgram::CompileShaderFromFile(char* szFileName,
 
   if (FAILED(hr)) {
     if (pErrorBlob) {
-      ERROR("ShaderProgram", "CompileShaderFromfile",
-        "Failed to compile shader from file: %s. ERROR: %s",
-        szFileName, static_cast<const char*>(pErrorBlob->GetBufferPointer()));
+      // 1. Imprimimos el error crudo directamente en la consola de Visual Studio
+      OutputDebugStringA("\n================ ERROR DE HLSL ================\n");
+      OutputDebugStringA(static_cast<const char*>(pErrorBlob->GetBufferPointer()));
+      OutputDebugStringA("\n===============================================\n");
+
+      ERROR("ShaderProgram", "CompileShaderFromfile", "Failed to compile shader (revisa la consola arriba)");
 
       pErrorBlob->Release();
     }
     else {
-      ERROR("ShaderProgram", "CompileShaderFromfile",
-        "Failed to compile shader from file: %s. ERROR: %s. No error message available",
-        szFileName);
+      ERROR("ShaderProgram", "CompileShaderFromfile", "Failed to compile shader. No error message available");
     }
     return hr;
   }

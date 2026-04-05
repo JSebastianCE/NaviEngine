@@ -45,12 +45,12 @@ ModelLoader::Load(std::string objFileName)
   // Recorre todos los vértices cargados y copia su información.
   for (int i = 0; i < LD.vertex.size(); i++)
   {
-    LD.vertex[i].Pos.x = m_loader.LoadedVertices[i].Position.X;
-    LD.vertex[i].Pos.y = m_loader.LoadedVertices[i].Position.Y;
-    LD.vertex[i].Pos.z = m_loader.LoadedVertices[i].Position.Z;
+    LD.vertex[i].Position.x = m_loader.LoadedVertices[i].Position.X;
+    LD.vertex[i].Position.y = m_loader.LoadedVertices[i].Position.Y;
+    LD.vertex[i].Position.z = m_loader.LoadedVertices[i].Position.Z;
 
-    LD.vertex[i].Tex.x = m_loader.LoadedVertices[i].TextureCoordinate.X;
-    LD.vertex[i].Tex.y = m_loader.LoadedVertices[i].TextureCoordinate.Y;
+    LD.vertex[i].TextureCoordinate.x = m_loader.LoadedVertices[i].TextureCoordinate.X;
+    LD.vertex[i].TextureCoordinate.y = m_loader.LoadedVertices[i].TextureCoordinate.Y;
 
     LD.vertex[i].Normal.x = m_loader.LoadedVertices[i].Normal.X;
     LD.vertex[i].Normal.y = m_loader.LoadedVertices[i].Normal.Y;

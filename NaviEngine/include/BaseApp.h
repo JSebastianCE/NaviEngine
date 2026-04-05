@@ -13,18 +13,17 @@
 #include "Buffer.h"
 #include "SamplerState.h"
 
-
 #include "ModelLoader.h"
 #include "Model3D.h"
 #include "GUI.h"
 #include "ECS/Actor.h"
 
 #include "SceneGraph\SceneGraph.h"
+
 #include "EngineUtilities\Utilities\Camera.h"
-
 #include "EngineUtilities\Utilities\Skybox.h"
-
 #include "EngineUtilities\Utilities\LayoutBuilder.h"
+#include "EngineUtilities/Utilities/EditorViewportPass.h"
 
 class
 BaseApp {
@@ -132,4 +131,13 @@ private:
   Skybox m_skybox;
   RasterizerState m_defaultRasterizer;
   DepthStencilState m_defaultDepthStencil;
+
+  EditorViewportPass m_editorViewportPass;
+  bool m_editorViewportResizePending = false;
+  unsigned int m_pendingViewportWidth = 1;
+  unsigned int m_pendingViewportHeight = 1;
+
+  unsigned int m_lastRequestedViewportWidth = 1;
+  unsigned int m_lastRequestedViewportHeight = 1;
+  int m_viewportResizeStableFrames = 0;
 };

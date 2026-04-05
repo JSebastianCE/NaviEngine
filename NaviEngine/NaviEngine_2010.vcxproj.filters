@@ -98,9 +98,6 @@
     <ClInclude Include="include\BaseApp.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="include\ModelLoader.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\OBJ_Loader.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -206,14 +203,12 @@
     <ClInclude Include="include\EngineUtilities\Utilities\LayoutBuilder.h">
       <Filter>include\Utilities</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="bin\Skybox.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="bin\PBRShader.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
+    <ClInclude Include="include\EngineUtilities\Utilities\EditorViewportPass.h">
+      <Filter>include\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ModelLoader.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -264,9 +259,6 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\BaseApp.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\ModelLoader.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\ParserOBJ.cpp">
@@ -320,10 +312,22 @@
     <ClCompile Include="source\DepthStencilState.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\EditorViewportPass.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\ModelLoader.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="bin\NaviEngine.fx">
+    <None Include="bin\NaviEngine.fx">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
+    <None Include="bin\PBRShader.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\Skybox.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

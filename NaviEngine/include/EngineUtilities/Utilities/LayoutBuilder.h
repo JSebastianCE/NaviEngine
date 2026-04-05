@@ -9,7 +9,7 @@
  * soportando tanto datos por vértice como por instancia.
  */
 class
-  LayoutBuilder
+LayoutBuilder
 {
 public:
   // **Add() base** (per-vertex por defecto)
