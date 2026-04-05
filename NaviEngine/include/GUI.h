@@ -15,38 +15,41 @@ class Actor;
 class Camera;
 
 class
-  GUI {
+GUI {
 public:
   GUI() = default;
   ~GUI() = default;
 
   void
-    awake();
+  awake();
 
   void
-    init(Window& window, Device& device, DeviceContext& deviceContext);
+  init(Window& window, Device& device, DeviceContext& deviceContext);
 
   void
-    update(Viewport& viewport, Window& window);
+  update(Viewport& viewport, Window& window);
 
   void
-    render();
+  render();
 
   void
-    destroy();
+  destroy();
 
   void
-    ToolBar();
+  ToolBar();
 
 
   void
-    closeApp();
+  closeApp();
 
   void
-    toolTipData();
+  toolTipData();
 
   void
-    appleLiquidStyle(float opacity /*0..1f*/, ImVec4 accent /*=#0A84FF*/);
+  appleLiquidStyle(float opacity /*0..1f*/, ImVec4 accent /*=#0A84FF*/);
+
+  void
+  classicWiiStyle();
 
   void
     vec3Control(const std::string& label,
@@ -55,19 +58,19 @@ public:
       float columnWidth = 100.0f);
 
   void
-    inspectorGeneral(EU::TSharedPointer<Actor> actor);
+  inspectorGeneral(EU::TSharedPointer<Actor> actor);
 
   void
-    inspectorContainer(EU::TSharedPointer<Actor> actor);
+  inspectorContainer(EU::TSharedPointer<Actor> actor);
 
   void
-    outliner(const std::vector<EU::TSharedPointer<Actor>>& actors);
+  outliner(const std::vector<EU::TSharedPointer<Actor>>& actors);
 
   void
-    editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor);
+  editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor);
 
   void
-    drawGizmoToolbar();
+  drawGizmoToolbar();
 
   // Crea una función auxiliar para convertir XMMATRIX a lo que ImGuizmo quiere
   void ToFloatArray(const XMMATRIX& mat, float* dest) {
@@ -77,11 +80,15 @@ public:
   }
 
   void
-    drawStudioTopRibbon();
+  drawStudioTopRibbon();
 
-  void drawViewportPanel(ID3D11ShaderResourceView* viewportSRV);
+  void
+  drawViewportPanel(ID3D11ShaderResourceView* viewportSRV);
 
-  void drawEditorDockspace();
+  void
+  drawEditorDockspace();
+
+
 
 private:
 

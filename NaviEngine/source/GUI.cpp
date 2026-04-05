@@ -29,7 +29,9 @@ GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
 
-	appleLiquidStyle(0.72f, ImVec4(0.0f, 0.515f, 1.0f, 1.0f));
+	//appleLiquidStyle(0.72f, ImVec4(0.0f, 0.515f, 1.0f, 1.0f));
+
+	classicWiiStyle();
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(window.m_hWnd);
@@ -147,8 +149,9 @@ void
 GUI::toolTipData() {
 }
 
-void
-GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
+//Estilo del profe
+/*
+void GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
 	ImGuiStyle& style = ImGui::GetStyle();
 	ImVec4* colors = style.Colors;
 
@@ -239,7 +242,89 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
 	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0.20f);
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0, 0, 0, 0.35f);
 }
+*/
 
+
+void GUI::classicWiiStyle() {
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImVec4* colors = style.Colors;
+
+	ImGui::StyleColorsLight();
+
+	// 1. FORMAS MÁS REDONDEADAS (Efecto "Píldora" para los botones)
+	style.WindowRounding = 16.0f;
+	style.ChildRounding = 14.0f;
+	style.PopupRounding = 14.0f;
+	style.FrameRounding = 24.0f;   // <- CLAVE: Valor muy alto para hacerlos tipo píldora
+	style.GrabRounding = 12.0f;
+	style.ScrollbarRounding = 12.0f;
+	style.TabRounding = 10.0f;
+
+	// 2. BORDES (Para lograr el borde celeste del botón)
+	style.WindowBorderSize = 1.0f;
+	style.FrameBorderSize = 1.5f;  // <- CLAVE: Borde visible y un poco más grueso
+	style.PopupBorderSize = 1.0f;
+
+	// Espaciado ajustado para que respiren los botones ovalados
+	style.WindowPadding = ImVec2(16, 16);
+	style.FramePadding = ImVec2(16, 6);
+	style.ItemSpacing = ImVec2(10, 10);
+
+	// 3. PALETA DE COLORES
+	const ImVec4 textDark = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
+	const ImVec4 wiiCyan = ImVec4(0.15f, 0.75f, 0.95f, 1.0f);      // Celeste vibrante de los bordes
+	const ImVec4 wiiBlueLight = ImVec4(0.85f, 0.93f, 0.98f, 1.0f); // Celeste muy suave (Hover)
+	const ImVec4 bgLightGrey = ImVec4(0.86f, 0.86f, 0.86f, 1.0f);  // Gris clarito (pestañas y barras)
+	const ImVec4 btnGreyWhite = ImVec4(0.93f, 0.94f, 0.95f, 1.0f); // Blanco/Grisáceo del interior del botón
+
+	colors[ImGuiCol_Text] = textDark;
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
+
+	// Fondos Generales
+	colors[ImGuiCol_WindowBg] = bgLightGrey;
+	colors[ImGuiCol_ChildBg] = ImVec4(0.92f, 0.92f, 0.92f, 1.0f);
+	colors[ImGuiCol_PopupBg] = ImVec4(0.95f, 0.95f, 0.95f, 0.98f);
+	colors[ImGuiCol_MenuBarBg] = bgLightGrey; // Menú superior gris claro
+
+	// BORDES: Aplicamos el celeste globalmente para enmarcar botones e inputs
+	colors[ImGuiCol_Border] = wiiCyan;
+	colors[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+
+	// Botones (Grisáceo por dentro, borde celeste heredado de Color_Border)
+	colors[ImGuiCol_Button] = btnGreyWhite;
+	colors[ImGuiCol_ButtonHovered] = wiiBlueLight;
+	colors[ImGuiCol_ButtonActive] = ImVec4(0.60f, 0.85f, 0.98f, 1.0f);
+
+	// Inputs / Frames (Siguen la misma lógica de los botones)
+	colors[ImGuiCol_FrameBg] = btnGreyWhite;
+	colors[ImGuiCol_FrameBgHovered] = wiiBlueLight;
+	colors[ImGuiCol_FrameBgActive] = wiiCyan;
+
+	// Pestañas (Color gris clarito como solicitaste)
+	colors[ImGuiCol_Tab] = bgLightGrey;
+	colors[ImGuiCol_TabHovered] = wiiBlueLight;
+	colors[ImGuiCol_TabActive] = btnGreyWhite; // La activa se vuelve un poco más clara para resaltar
+	colors[ImGuiCol_TabUnfocused] = bgLightGrey;
+	colors[ImGuiCol_TabUnfocusedActive] = btnGreyWhite;
+
+	// Títulos
+	colors[ImGuiCol_TitleBg] = bgLightGrey;
+	colors[ImGuiCol_TitleBgActive] = bgLightGrey;
+	colors[ImGuiCol_TitleBgCollapsed] = bgLightGrey;
+
+	// Cabeceras (Collapsing headers del inspector)
+	colors[ImGuiCol_Header] = wiiBlueLight;
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.75f, 0.88f, 0.98f, 1.0f);
+	colors[ImGuiCol_HeaderActive] = wiiCyan;
+
+	// Elementos de acento
+	colors[ImGuiCol_CheckMark] = wiiCyan;
+	colors[ImGuiCol_SliderGrab] = wiiCyan;
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.0f, 0.50f, 0.80f, 1.0f);
+	colors[ImGuiCol_Separator] = ImVec4(0.70f, 0.70f, 0.70f, 0.50f); // Separador gris neutro
+	colors[ImGuiCol_SeparatorHovered] = wiiCyan;
+	colors[ImGuiCol_NavHighlight] = wiiCyan;
+}
 
 void
 GUI::ToolBar() {
@@ -573,7 +658,8 @@ void GUI::drawStudioTopRibbon()
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 4.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.11f, 0.14f, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.11f, 0.14f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	if (ImGui::Begin("##StudioMenuBar", nullptr, menuFlags))
 	{
@@ -663,10 +749,15 @@ void GUI::drawStudioTopRibbon()
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 6.0f));
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.09f, 0.12f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.15f, 0.19f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.22f, 0.28f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.24f, 0.26f, 0.34f, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.09f, 0.12f, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.14f, 0.15f, 0.19f, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.22f, 0.28f, 1.0f));
+	//ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.24f, 0.26f, 0.34f, 1.0f));
+
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.96f, 0.96f, 0.98f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.85f, 0.93f, 0.98f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.00f, 0.65f, 0.95f, 1.0f));
 
 	if (ImGui::Begin("##StudioRibbon", nullptr, ribbonFlags))
 	{
