@@ -146,104 +146,74 @@ GUI::vec3Control(const std::string& label, float* values, float resetValue, floa
 }
 
 void
+GUI::vec3ControlSlider(const std::string& label, float* values, float min, float max, float resetValue, float columnWidth) {
+	ImGuiIO& io = ImGui::GetIO();
+	auto boldFont = io.Fonts->Fonts[0];
+
+	ImGui::PushID(label.c_str());
+
+	ImGui::Columns(2);
+	ImGui::SetColumnWidth(0, columnWidth);
+	ImGui::Text(label.c_str());
+	ImGui::NextColumn();
+
+	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+
+	float lineHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2.0f;
+	ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+	// Botón X
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+	ImGui::PushFont(boldFont);
+	if (ImGui::Button("X", buttonSize)) values[0] = resetValue;
+	ImGui::PopFont();
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::SliderFloat("##X", &values[0], min, max, "%.2f");
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	// Botón Y
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+	ImGui::PushFont(boldFont);
+	if (ImGui::Button("Y", buttonSize)) values[1] = resetValue;
+	ImGui::PopFont();
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::SliderFloat("##Y", &values[1], min, max, "%.2f");
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	// Botón Z
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+	ImGui::PushFont(boldFont);
+	if (ImGui::Button("Z", buttonSize)) values[2] = resetValue;
+	ImGui::PopFont();
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::SliderFloat("##Z", &values[2], min, max, "%.2f");
+	ImGui::PopItemWidth();
+
+	ImGui::PopStyleVar();
+	ImGui::Columns(1);
+
+	ImGui::PopID();
+}
+
+
+void
 GUI::toolTipData() {
 }
-
-//Estilo del profe
-/*
-void GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
-	ImGuiStyle& style = ImGui::GetStyle();
-	ImVec4* colors = style.Colors;
-
-	// Geometría suave tipo macOS
-	style.WindowRounding = 14.0f;
-	style.ChildRounding = 14.0f;
-	style.PopupRounding = 14.0f;
-	style.FrameRounding = 10.0f;
-	style.GrabRounding = 10.0f;
-	style.ScrollbarRounding = 12.0f;
-	style.TabRounding = 10.0f;
-
-	style.WindowBorderSize = 1.0f;
-	style.FrameBorderSize = 0.0f;
-	style.PopupBorderSize = 1.0f;
-	style.TabBorderSize = 0.0f;
-
-	style.WindowPadding = ImVec2(14, 12);
-	style.FramePadding = ImVec2(12, 8);
-	style.ItemSpacing = ImVec2(8, 8);
-	style.ItemInnerSpacing = ImVec2(8, 6);
-
-	const float o = opacity;                 // opacidad del “cristal”
-	const ImVec4 txt = ImVec4(1, 1, 1, 0.95f);     // texto claro
-	const ImVec4 pane = ImVec4(0.16f, 0.16f, 0.18f, o); // panel “vidrioso” oscuro
-	const ImVec4 paneHi = ImVec4(0.20f, 0.20f, 0.22f, o);
-	const ImVec4 paneLo = ImVec4(0.13f, 0.13f, 0.15f, o * 0.85f);
-
-	// Colores base “glass”
-	colors[ImGuiCol_Text] = txt;
-	colors[ImGuiCol_TextDisabled] = ImVec4(1, 1, 1, 0.45f);
-	colors[ImGuiCol_WindowBg] = pane;     // importante: con alpha
-	colors[ImGuiCol_ChildBg] = paneLo;
-	colors[ImGuiCol_PopupBg] = paneHi;
-	colors[ImGuiCol_Border] = ImVec4(1, 1, 1, 0.10f);
-	colors[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0.0f);
-
-	colors[ImGuiCol_FrameBg] = paneLo;
-	colors[ImGuiCol_FrameBgHovered] = pane;
-	colors[ImGuiCol_FrameBgActive] = paneHi;
-
-	colors[ImGuiCol_TitleBg] = pane;
-	colors[ImGuiCol_TitleBgActive] = paneHi;
-	colors[ImGuiCol_TitleBgCollapsed] = paneLo;
-
-	colors[ImGuiCol_MenuBarBg] = pane;
-
-	colors[ImGuiCol_ScrollbarBg] = ImVec4(0, 0, 0, 0.0f);
-	colors[ImGuiCol_ScrollbarGrab] = ImVec4(1, 1, 1, 0.10f);
-	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(1, 1, 1, 0.18f);
-	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(1, 1, 1, 0.26f);
-
-	// Acento tipo macOS (azul #0A84FF por defecto)
-	colors[ImGuiCol_CheckMark] = accent;
-	colors[ImGuiCol_SliderGrab] = accent;
-	colors[ImGuiCol_SliderGrabActive] = ImVec4(accent.x, accent.y, accent.z, 1.0f);
-
-	colors[ImGuiCol_Button] = paneLo;
-	colors[ImGuiCol_ButtonHovered] = pane;
-	colors[ImGuiCol_ButtonActive] = paneHi;
-
-	colors[ImGuiCol_Header] = paneLo;
-	colors[ImGuiCol_HeaderHovered] = pane;
-	colors[ImGuiCol_HeaderActive] = paneHi;
-
-	colors[ImGuiCol_Separator] = ImVec4(1, 1, 1, 0.10f);
-	colors[ImGuiCol_SeparatorHovered] = ImVec4(1, 1, 1, 0.18f);
-	colors[ImGuiCol_SeparatorActive] = ImVec4(1, 1, 1, 0.30f);
-
-	colors[ImGuiCol_Tab] = paneLo;
-	colors[ImGuiCol_TabHovered] = pane;
-	colors[ImGuiCol_TabActive] = paneHi;
-	colors[ImGuiCol_TabUnfocused] = paneLo;
-	colors[ImGuiCol_TabUnfocusedActive] = pane;
-
-	colors[ImGuiCol_DockingPreview] = ImVec4(accent.x, accent.y, accent.z, 0.35f);
-	colors[ImGuiCol_DockingEmptyBg] = ImVec4(0, 0, 0, 0.0f);
-
-	colors[ImGuiCol_TableHeaderBg] = pane;
-	colors[ImGuiCol_TableBorderStrong] = ImVec4(1, 1, 1, 0.08f);
-	colors[ImGuiCol_TableBorderLight] = ImVec4(1, 1, 1, 0.04f);
-	colors[ImGuiCol_TableRowBg] = ImVec4(1, 1, 1, 0.03f);
-	colors[ImGuiCol_TableRowBgAlt] = ImVec4(1, 1, 1, 0.06f);
-
-	colors[ImGuiCol_TextSelectedBg] = ImVec4(accent.x, accent.y, accent.z, 0.35f);
-	colors[ImGuiCol_NavHighlight] = ImVec4(accent.x, accent.y, accent.z, 0.50f);
-	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1, 1, 1, 0.30f);
-	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0.20f);
-	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0, 0, 0, 0.35f);
-}
-*/
-
 
 void GUI::classicWiiStyle() {
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -275,7 +245,9 @@ void GUI::classicWiiStyle() {
 	const ImVec4 wiiCyan = ImVec4(0.15f, 0.75f, 0.95f, 1.0f);      // Celeste vibrante de los bordes
 	const ImVec4 wiiBlueLight = ImVec4(0.85f, 0.93f, 0.98f, 1.0f); // Celeste muy suave (Hover)
 	const ImVec4 bgLightGrey = ImVec4(0.86f, 0.86f, 0.86f, 1.0f);  // Gris clarito (pestañas y barras)
-	const ImVec4 btnGreyWhite = ImVec4(0.93f, 0.94f, 0.95f, 1.0f); // Blanco/Grisáceo del interior del botón
+
+	// CAMBIO: Color grisáceo para darle el efecto "mancha" o volumen característico de Wii
+	const ImVec4 btnGreyWhite = ImVec4(0.88f, 0.89f, 0.90f, 1.0f);
 
 	colors[ImGuiCol_Text] = textDark;
 	colors[ImGuiCol_TextDisabled] = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
@@ -288,7 +260,9 @@ void GUI::classicWiiStyle() {
 
 	// BORDES: Aplicamos el celeste globalmente para enmarcar botones e inputs
 	colors[ImGuiCol_Border] = wiiCyan;
-	colors[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
+
+	// CAMBIO: Añadimos una ligera sombra al borde para dar sensación de profundidad
+	colors[ImGuiCol_BorderShadow] = ImVec4(0.2f, 0.2f, 0.2f, 0.15f);
 
 	// Botones (Grisáceo por dentro, borde celeste heredado de Color_Border)
 	colors[ImGuiCol_Button] = btnGreyWhite;
@@ -303,7 +277,7 @@ void GUI::classicWiiStyle() {
 	// Pestañas (Color gris clarito como solicitaste)
 	colors[ImGuiCol_Tab] = bgLightGrey;
 	colors[ImGuiCol_TabHovered] = wiiBlueLight;
-	colors[ImGuiCol_TabActive] = btnGreyWhite; // La activa se vuelve un poco más clara para resaltar
+	colors[ImGuiCol_TabActive] = btnGreyWhite;
 	colors[ImGuiCol_TabUnfocused] = bgLightGrey;
 	colors[ImGuiCol_TabUnfocusedActive] = btnGreyWhite;
 
@@ -321,7 +295,7 @@ void GUI::classicWiiStyle() {
 	colors[ImGuiCol_CheckMark] = wiiCyan;
 	colors[ImGuiCol_SliderGrab] = wiiCyan;
 	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.0f, 0.50f, 0.80f, 1.0f);
-	colors[ImGuiCol_Separator] = ImVec4(0.70f, 0.70f, 0.70f, 0.50f); // Separador gris neutro
+	colors[ImGuiCol_Separator] = ImVec4(0.70f, 0.70f, 0.70f, 0.50f);
 	colors[ImGuiCol_SeparatorHovered] = wiiCyan;
 	colors[ImGuiCol_NavHighlight] = wiiCyan;
 }
@@ -449,13 +423,52 @@ GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
 
 void
 GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
-	//ImGui::Begin("Transform");
-	// Draw the structure
-	vec3Control("Position", const_cast<float*>(actor->getComponent<Transform>()->getPosition().data()));
-	vec3Control("Rotation", const_cast<float*>(actor->getComponent<Transform>()->getRotation().data()));
-	vec3Control("Scale", const_cast<float*>(actor->getComponent<Transform>()->getScale().data()));
+	auto transform = actor->getComponent<Transform>();
+	if (!transform) return;
 
-	//ImGui::End();
+	// 1. Extraemos los valores actuales de forma segura
+	EU::Vector3 pos = transform->getPosition();
+	EU::Vector3 rot = transform->getRotation();
+	EU::Vector3 sca = transform->getScale();
+
+	// 2. Los pasamos a arreglos que ImGui pueda leer y modificar
+	float posArr[3] = { pos.x, pos.y, pos.z };
+	float rotArr[3] = { rot.x, rot.y, rot.z };
+	float scaArr[3] = { sca.x, sca.y, sca.z };
+
+	// 3. Dibujamos las pestañas
+	if (ImGui::BeginTabBar("TransformTabs")) {
+		// Pestaña 1: Numérica tradicional
+		if (ImGui::BeginTabItem("Numeric")) {
+			vec3Control("Position", posArr, 0.0f);
+			vec3Control("Rotation", rotArr, 0.0f);
+			vec3Control("Scale", scaArr, 1.0f);
+			ImGui::EndTabItem();
+		}
+
+		// Pestaña 2: Sliders
+		if (ImGui::BeginTabItem("Sliders")) {
+			vec3ControlSlider("Position", posArr, -50.0f, 50.0f, 0.0f);
+			vec3ControlSlider("Rotation", rotArr, -360.0f, 360.0f, 0.0f);
+			vec3ControlSlider("Scale", scaArr, 0.0f, 10.0f, 1.0f);
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
+
+	// 4. Comparamos si ImGui modificó los valores temporales. 
+	// Si cambiaron, ahora SÍ usamos los Setters del componente.
+	if (pos.x != posArr[0] || pos.y != posArr[1] || pos.z != posArr[2]) {
+		transform->setPosition(EU::Vector3(posArr[0], posArr[1], posArr[2]));
+	}
+
+	if (rot.x != rotArr[0] || rot.y != rotArr[1] || rot.z != rotArr[2]) {
+		transform->setRotation(EU::Vector3(rotArr[0], rotArr[1], rotArr[2]));
+	}
+
+	if (sca.x != scaArr[0] || sca.y != scaArr[1] || sca.z != scaArr[2]) {
+		transform->setScale(EU::Vector3(scaArr[0], scaArr[1], scaArr[2]));
+	}
 }
 
 void
@@ -665,7 +678,46 @@ void GUI::drawStudioTopRibbon()
 	{
 		if (ImGui::BeginMenuBar())
 		{
-			if (ImGui::BeginMenu("File"))
+			// Lógica para que los menús principales parezcan botones de Wii
+			const ImVec4 wiiCyan = ImVec4(0.15f, 0.75f, 0.95f, 1.0f);
+			const ImVec4 btnGreyWhite = ImVec4(0.88f, 0.89f, 0.90f, 1.0f);
+			const ImVec4 wiiBlueLight = ImVec4(0.85f, 0.93f, 0.98f, 1.0f);
+
+			auto beginEstilizedMenu = [&](const char* label) -> bool {
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 24.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(18, 6));
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 0));
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, btnGreyWhite);
+				ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, wiiBlueLight);
+				ImGui::PushStyleColor(ImGuiCol_FrameBgActive, wiiCyan);
+				ImGui::PushStyleColor(ImGuiCol_Border, wiiCyan);
+				ImGui::PushStyleColor(ImGuiCol_Header, btnGreyWhite);
+				ImGui::PushStyleColor(ImGuiCol_HeaderHovered, wiiBlueLight);
+				ImGui::PushStyleColor(ImGuiCol_HeaderActive, wiiCyan);
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.25f, 0.25f, 0.25f, 1.0f));
+
+				bool isOpen = ImGui::BeginMenu(label);
+
+				// FIX: Si el menú no está abierto (false), debemos hacer el Pop de los estilos
+				// aquí mismo, porque el bloque if() en el que se llama no se ejecutará.
+				if (!isOpen) {
+					ImGui::PopStyleColor(8);
+					ImGui::PopStyleVar(5);
+				}
+
+				return isOpen;
+				};
+
+			auto endEstilizedMenu = []() {
+				ImGui::EndMenu();
+				ImGui::PopStyleColor(8);
+				ImGui::PopStyleVar(5);
+				};
+
+			if (beginEstilizedMenu("File"))
 			{
 				ImGui::MenuItem("New Place");
 				ImGui::MenuItem("Open Place");
@@ -675,10 +727,10 @@ void GUI::drawStudioTopRibbon()
 				{
 					show_exit_popup = true;
 				}
-				ImGui::EndMenu();
+				endEstilizedMenu();
 			}
 
-			if (ImGui::BeginMenu("Edit"))
+			if (beginEstilizedMenu("Edit"))
 			{
 				ImGui::MenuItem("Undo");
 				ImGui::MenuItem("Redo");
@@ -686,43 +738,43 @@ void GUI::drawStudioTopRibbon()
 				ImGui::MenuItem("Cut");
 				ImGui::MenuItem("Copy");
 				ImGui::MenuItem("Paste");
-				ImGui::EndMenu();
+				endEstilizedMenu();
 			}
 
-			if (ImGui::BeginMenu("View"))
+			if (beginEstilizedMenu("View"))
 			{
 				ImGui::MenuItem("Explorer");
 				ImGui::MenuItem("Properties");
 				ImGui::MenuItem("Toolbox");
-				ImGui::EndMenu();
+				endEstilizedMenu();
 			}
 
-			if (ImGui::BeginMenu("Plugins"))
+			if (beginEstilizedMenu("Plugins"))
 			{
 				ImGui::MenuItem("Manage Plugins");
 				ImGui::MenuItem("Plugin Folder");
-				ImGui::EndMenu();
+				endEstilizedMenu();
 			}
 
-			if (ImGui::BeginMenu("Test"))
+			if (beginEstilizedMenu("Test"))
 			{
 				ImGui::MenuItem("Play");
 				ImGui::MenuItem("Pause");
 				ImGui::MenuItem("Stop");
-				ImGui::EndMenu();
+				endEstilizedMenu();
 			}
 
-			if (ImGui::BeginMenu("Window"))
+			if (beginEstilizedMenu("Window"))
 			{
 				ImGui::MenuItem("Reset Layout");
-				ImGui::EndMenu();
+				endEstilizedMenu();
 			}
 
-			if (ImGui::BeginMenu("Help"))
+			if (beginEstilizedMenu("Help"))
 			{
 				ImGui::MenuItem("Documentation");
 				ImGui::MenuItem("About");
-				ImGui::EndMenu();
+				endEstilizedMenu();
 			}
 
 			ImGui::EndMenuBar();
@@ -779,14 +831,15 @@ void GUI::drawStudioTopRibbon()
 
 				float centerX = (min.x + max.x) * 0.5f;
 
+				// CAMBIO: Al hacer el botón más bajo (36.0f), ajustamos el offset en Y del texto para que no se salga.
 				drawList->AddText(
-					ImVec2(centerX - topSize.x * 0.5f, min.y + 10.0f),
+					ImVec2(centerX - topSize.x * 0.5f, min.y + 4.0f),
 					ImGui::GetColorU32(ImGuiCol_Text),
 					topText
 				);
 
 				drawList->AddText(
-					ImVec2(centerX - bottomSize.x * 0.5f, min.y + 34.0f),
+					ImVec2(centerX - bottomSize.x * 0.5f, min.y + 18.0f),
 					ImGui::GetColorU32(ImGuiCol_TextDisabled),
 					bottomText
 				);
@@ -816,7 +869,8 @@ void GUI::drawStudioTopRibbon()
 				ImGui::SameLine();
 			};
 
-		const ImVec2 btnSize(72.0f, 52.0f);
+		// CAMBIO: Nuevo tamaño para los botones. (Ancho 110, Alto 36).
+		const ImVec2 btnSize(110.0f, 36.0f);
 
 		// Herramientas de transformacion
 		if (ribbonButton("##Select", "Select", "Cursor", btnSize, false))
@@ -831,15 +885,15 @@ void GUI::drawStudioTopRibbon()
 		}
 		ImGui::SameLine();
 
+		if (ribbonButton("##Rotate", "Rotate", "E", btnSize, mCurrentGizmoOperation == ImGuizmo::ROTATE))
+				{
+					mCurrentGizmoOperation = ImGuizmo::ROTATE;
+				}
+				ImGui::SameLine();
+
 		if (ribbonButton("##Scale", "Scale", "R", btnSize, mCurrentGizmoOperation == ImGuizmo::SCALE))
 		{
 			mCurrentGizmoOperation = ImGuizmo::SCALE;
-		}
-		ImGui::SameLine();
-
-		if (ribbonButton("##Rotate", "Rotate", "E", btnSize, mCurrentGizmoOperation == ImGuizmo::ROTATE))
-		{
-			mCurrentGizmoOperation = ImGuizmo::ROTATE;
 		}
 		ImGui::SameLine();
 
@@ -848,6 +902,7 @@ void GUI::drawStudioTopRibbon()
 			// herramienta extra
 		}
 
+		/*
 		separatorGroup();
 
 		// Creacion / escena
@@ -873,6 +928,8 @@ void GUI::drawStudioTopRibbon()
 		{
 			// color picker
 		}
+		*/
+
 
 		separatorGroup();
 
@@ -894,6 +951,8 @@ void GUI::drawStudioTopRibbon()
 			// toggle toolbox
 		}
 	}
+
+
 	ImGui::End();
 
 	ImGui::PopStyleColor(4);
@@ -992,4 +1051,26 @@ void GUI::drawEditorDockspace()
 	ImGui::End();
 
 	ImGui::PopStyleVar(3);
+}
+
+void
+GUI::debugLightsContainer(float* lightDir, float* lightColor) {
+	if (ImGui::BeginTabBar("LightTabs")) {
+		// Pestaña 1: Numérica tradicional
+		if (ImGui::BeginTabItem("Numeric")) {
+			vec3Control("Light Dir", lightDir);
+			vec3Control("Light Color", lightColor);
+			ImGui::EndTabItem();
+		}
+
+		// Pestaña 2: Sliders
+		if (ImGui::BeginTabItem("Sliders")) {
+			// La dirección suele estar normalizada entre -1.0 y 1.0
+			vec3ControlSlider("Light Dir", lightDir, -1.0f, 1.0f, 0.0f);
+			// El color suele ir de 0.0 a 1.0 en formato RGB (que aquí usas como XYZ)
+			vec3ControlSlider("Light Color", lightColor, 0.0f, 1.0f, 1.0f);
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
 }
