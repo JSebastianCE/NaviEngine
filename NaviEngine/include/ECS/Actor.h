@@ -5,20 +5,15 @@
 #include "Texture.h"
 #include "Transform.h" 
 #include "SamplerState.h"
-
-#include "ShaderProgram.h"
-
 #include "RasterizerState.h"
+#include "ShaderProgram.h"
 #include "DepthStencilState.h"
 
-class 
-Device;
+class Device;
 
-class 
-DeviceContext;
+class DeviceContext;
 
-class 
-MeshComponent;
+class MeshComponent;
 
 /**
  * @class Actor
@@ -27,9 +22,8 @@ MeshComponent;
  * La clase Actor hereda de Entity y agrega funcionalidades completas para renderizado,
  * aplicación de texturas, buffers, transformaciones y sombreado.
  */
-class Actor : 
-public 
-Entity {
+class 
+Actor : public Entity {
 public:
 
   /**
@@ -46,7 +40,8 @@ public:
   /**
    * @brief Destructor virtual por defecto.
    */
-  virtual ~Actor() = default;
+  virtual 
+  ~Actor() = default;
 
   void 
   awake() override{}
@@ -95,7 +90,8 @@ public:
    * @brief Obtiene el nombre del actor.
    * @return Nombre como cadena de texto.
    */
-  std::string getName() { return m_name; }
+  std::string 
+  getName() { return m_name; }
 
   /**
    * @brief Establece el nombre del actor.
@@ -139,7 +135,7 @@ private:
   std::vector<Buffer> m_indexBuffers;       ///< Buffers de índices asociados a las mallas.
 
   //BlendState m_blendState;                // Estado de blending usado por el actor.
-  RasterizerState m_rasterizer;                // Estado de rasterización usado por el actor.
+  //RasterizerState m_rasterizer;                // Estado de rasterización usado por el actor.
   SamplerState m_sampler;                   ///< Estado de muestreo de texturas.
   CBChangesEveryFrame m_model;              ///< Constant buffer con las transformaciones por frame.
   Buffer m_modelBuffer;                     ///< Buffer que contiene @c m_model.

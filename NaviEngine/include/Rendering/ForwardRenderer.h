@@ -184,9 +184,6 @@ private:
   /** @brief Estado de profundidad para transparencia. */
   DepthStencilState m_transparentDepthStencil;
 
-  /** @brief Estado de profundidad para sombras. */
-  DepthStencilState m_shadowDepthStencil;
-
   /** @brief Estados de blending. */
   ID3D11BlendState* m_alphaBlendState = nullptr;
   ID3D11BlendState* m_opaqueBlendState = nullptr;

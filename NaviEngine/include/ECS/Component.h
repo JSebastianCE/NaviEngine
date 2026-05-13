@@ -5,8 +5,7 @@
  * @class DeviceContext
  * @brief Declaración adelantada del contexto de dispositivo usado para operaciones de render.
  */
-class
-DeviceContext;
+class DeviceContext;
 
 /**
  * @class Component

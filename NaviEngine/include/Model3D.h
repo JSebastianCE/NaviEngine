@@ -39,14 +39,15 @@ public:
     mesh.m_skyVertex.assign(vertices, vertices + 8);
     mesh.m_index.assign(indices, indices + 36);
     mesh.m_numIndex = mesh.m_index.size();
-    SetType(ResourceType:: Model3D);
+    SetType(ResourceType::Model3D);
     m_meshes.push_back(mesh);
   }
 
   /**
    * @brief Destructor por defecto.
    */
-  ~Model3D() = default;
+  ~Model3D();
+  //~Model3D() = override;
 
   /**
    * @brief Carga un modelo desde ruta especificada.
@@ -96,7 +97,10 @@ public:
    * @return Vector de mallas generadas.
    */
   std::vector<MeshComponent>
-  LoadFBXModel(const std::string& filePath);
+    LoadFBXModel(const std::string& filePath);
+
+  std::vector<MeshComponent>
+  LoadOBJModel(const std::string& filePath);
 
   /**
    * @brief Procesa un nodo del archivo FBX.
@@ -124,12 +128,18 @@ public:
    * @return Vector de rutas/nombres de texturas.
    */
   std::vector<std::string>
-  GetTextureFileName() const { return textureFileName; }
+  GetTextureFileNames() const { return textureFileNames; }
+
+private:
+  std::string GetBinaryCachePath() const;
+  bool IsBinaryCacheUpToDate(const std::string& sourcePath, const std::string& cachePath) const;
+  bool LoadBinaryCache(const std::string& cachePath);
+  bool SaveBinaryCache(const std::string& cachePath) const;
 
 private:
   FbxManager* lSdkManager;            ///< Administrador principal del SDK de FBX.
   FbxScene* lScene;                   ///< Escena cargada desde el archivo FBX.
-  std::vector<std::string > textureFileName;  ///< Lista de texturas usadas por el modelo.
+  std::vector<std::string > textureFileNames;  ///< Lista de texturas usadas por el modelo.
 
 public:
   ModelType m_modelType;              ///< Tipo del modelo cargado (OBJ o FBX).

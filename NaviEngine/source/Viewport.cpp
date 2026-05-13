@@ -44,7 +44,7 @@ Viewport::init(unsigned int width, unsigned int height) {
 void
 Viewport::render(DeviceContext& deviceContext) {
   if (!deviceContext.m_deviceContext){
-    ERROR("Viewport", "init", "Device context is not set");
+    ERROR("Viewport", "render", "Device context is not set");
     return;
 }
 deviceContext.RSSetViewports(1, &m_viewport);

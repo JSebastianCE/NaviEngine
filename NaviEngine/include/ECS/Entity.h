@@ -2,8 +2,7 @@
 #include "Prerequisites.h"
 #include "Component.h"
 
-class 
-DeviceContext;
+class DeviceContext;
 
 /**
  * @class Entity

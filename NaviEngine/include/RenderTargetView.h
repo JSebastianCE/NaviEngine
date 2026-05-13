@@ -46,7 +46,7 @@ public:
    * @return HRESULT Código de resultado (S_OK si se inicializó correctamente).
    */
   HRESULT
-  init(Device& device, Texture& backBuffer, DXGI_FORMAT format);
+  init(Device& device, Texture& backBuffer, DXGI_FORMAT Format);
 
   /**
    * @brief Inicializa el Render Target View con una textura personalizada.
@@ -60,8 +60,8 @@ public:
   HRESULT
   init(Device& device,
       Texture& inTex,
-      D3D11_RTV_DIMENSION viewDimension,
-      DXGI_FORMAT format);
+      D3D11_RTV_DIMENSION ViewDimension,
+      DXGI_FORMAT Format);
 
   /**
    * @brief Actualiza el estado del Render Target View.
@@ -84,7 +84,7 @@ public:
   render(DeviceContext& deviceContext,
         DepthStencilView& depthStencilView,
         unsigned int numViews,
-        const float clearColor[4]);
+        const float ClearColor[4]);
 
   /**
    * @brief Renderiza utilizando este Render Target View sin un DepthStencilView.

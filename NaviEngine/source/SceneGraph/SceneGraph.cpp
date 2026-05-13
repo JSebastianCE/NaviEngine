@@ -1,8 +1,14 @@
-#include "SceneGraph/SceneGraph.h"
-#include "SceneGraph/HierarchyComponent.h"
-#include "ECS/Entity.h"
+#include "SceneGraph\SceneGraph.h"
+#include "SceneGraph\HierarchyComponent.h"
+#include "ECS\Entity.h"
+#include "ECS\Transform.h"
+#include "ECS\LightComponent.h"
+#include "ECS\MeshRendererComponent.h"
 #include "DeviceContext.h"
-#include "ECS/Transform.h" 
+#include "EngineUtilities/Utilities/Camera.h"
+#include "Rendering/Material.h"
+#include "Rendering/MaterialInstance.h"
+#include "Rendering/RenderScene.h"
 
 void SceneGraph::init() {
 	m_entities.clear();
@@ -203,6 +209,57 @@ void SceneGraph::render(DeviceContext& deviceContext) {
 	for (auto& e : m_entities) {
 		if (e) {
 			e->render(deviceContext);
+		}
+	}
+}
+
+void
+SceneGraph::gatherRenderScene(RenderScene& outScene, const Camera& camera) {
+	for (Entity* entity : m_entities)
+	{
+		if (!entity) {
+			continue;
+		}
+
+		auto lightComponent = entity->getComponent<LightComponent>();
+		if (lightComponent) {
+			outScene.directionalLights.push_back(lightComponent->getLightData());
+		}
+
+		auto meshRenderer = entity->getComponent<MeshRendererComponent>();
+		auto transform = entity->getComponent<Transform>();
+		if (!meshRenderer || !transform || !meshRenderer->isVisible()) {
+			continue;
+		}
+
+		RenderObject renderObject{};
+		renderObject.mesh = meshRenderer->getMesh();
+		renderObject.materialInstance = meshRenderer->getMaterialInstance();
+		renderObject.materialInstances = meshRenderer->getMaterialInstances();
+		renderObject.world = transform->worldMatrix;
+		renderObject.castShadow = meshRenderer->canCastShadow();
+
+		EU::Vector3 cameraPos = camera.getPosition();
+		XMFLOAT4X4 worldMatrix{};
+		XMStoreFloat4x4(&worldMatrix, transform->worldMatrix);
+		EU::Vector3 objectPos = EU::Vector3(worldMatrix._41, worldMatrix._42, worldMatrix._43);
+		float dx = objectPos.x - cameraPos.x;
+		float dy = objectPos.y - cameraPos.y;
+		float dz = objectPos.z - cameraPos.z;
+		renderObject.distanceToCamera = dx * dx + dy * dy + dz * dz;
+
+		MaterialDomain domain = MaterialDomain::Opaque;
+		if (renderObject.materialInstance &&
+			renderObject.materialInstance->getMaterial()) {
+			domain = renderObject.materialInstance->getMaterial()->getDomain();
+		}
+
+		renderObject.transparent = (domain == MaterialDomain::Transparent);
+		if (renderObject.transparent) {
+			outScene.transparentObjects.push_back(renderObject);
+		}
+		else {
+			outScene.opaqueObjects.push_back(renderObject);
 		}
 	}
 }

@@ -1,18 +1,14 @@
 #pragma once
 #include "Prerequisites.h"
-#include "Device.h"
-#include "DeviceContext.h"
 
 /**
  * @file SamplerState.h
  * @brief Declaración de la clase SamplerState, encargada de administrar el estado del muestreador (Sampler) en DirectX 11.
  */
 
-class
-Device;
+class Device;
 
-class
-DeviceContext;
+class DeviceContext;
 
 /**
  * @class SamplerState

@@ -18,7 +18,7 @@ Window::init(HINSTANCE hInstance,
   // Se registra la clase de la ventana. Esto define el "tipo" de ventana que se creará,
   // incluyendo su icono, cursor y procedimiento de ventana (la función que manejará los mensajes).
   //
-  WNDCLASSEX wcex;
+  WNDCLASSEX wcex = {};
   wcex.cbSize = sizeof(WNDCLASSEX);
   wcex.style = CS_HREDRAW | CS_VREDRAW; // La ventana se redibujará si se cambia su tamaño.
   wcex.lpfnWndProc = wndproc; // Se asigna el procedimiento de ventana.
@@ -47,16 +47,16 @@ Window::init(HINSTANCE hInstance,
 
   // Se llama a `CreateWindow` para crear la ventana real.
   m_hWnd = CreateWindow("TutorialWindowClass", // Nombre de la clase de la ventana que se va a crear.
-    "Direct3D 11 Tutorial 7", // Título de la ventana.
-    WS_OVERLAPPEDWINDOW, // Estilo de la ventana.
-    CW_USEDEFAULT, // Posición x por defecto.
-    CW_USEDEFAULT, // Posición y por defecto.
-    rc.right - rc.left, // Ancho de la ventana.
-    rc.bottom - rc.top, // Alto de la ventana.
-    NULL, // Sin ventana padre.
-    NULL, // Sin menú.
-    hInstance, // Handle de la instancia.
-    app);
+                        m_windowName.c_str(), // Título de la ventana.
+                        WS_OVERLAPPEDWINDOW, // Estilo de la ventana.
+                        CW_USEDEFAULT, // Posición x por defecto.
+                        CW_USEDEFAULT, // Posición y por defecto.
+                        rc.right - rc.left, // Ancho de la ventana.
+                        rc.bottom - rc.top, // Alto de la ventana.
+                        NULL, // Sin ventana padre.
+                        NULL, // Sin menú.
+                        hInstance, // Handle de la instancia.
+                        app);
   // Si la creación de la ventana falla, se muestra un mensaje de error y se devuelve E_FAIL.
   if (!m_hWnd) {
     MessageBox(nullptr, "CreateWindow failed!", "Error", MB_OK);

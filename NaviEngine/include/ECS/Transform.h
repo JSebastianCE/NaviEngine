@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Prerequisites.h"
 #include "EngineUtilities/Vectors/Vector3.h"
 #include "Component.h"
@@ -12,8 +13,7 @@
  * reconstruido manualmente desde sus vectores.
  */
 class
-Transform : public
-Component {
+Transform : public Component {
 public:
 
   /**
@@ -21,7 +21,12 @@ public:
    *
    * Inicializa vectores y asigna el tipo de componente TRANSFORM.
    */
-  Transform() : position(), rotation(), scale(), matrix(), Component(ComponentType::TRANSFORM) {}
+  Transform() : position(),
+                rotation(),
+                scale(), 
+                matrix(), 
+                worldMatrix(),                                                       //<----------------
+                Component(ComponentType::TRANSFORM) {}
 
   /**
    * @brief Inicializa valores por defecto del Transform.
@@ -32,6 +37,7 @@ public:
   init() {
     scale.one();
     matrix = XMMatrixIdentity();
+    worldMatrix = XMMatrixIdentity();                                                //<----------------
   }
 
   /**
@@ -43,8 +49,19 @@ public:
    * @param deltaTime Tiempo transcurrido desde el último frame.
    */
   void
-  update(float deltaTime) override {
-    // Vacío intencionalmente para evitar pelear con ImGuizmo
+  update(float deltaTime) override {                                                  //<----------------
+    // Aplicar escala
+    XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
+
+    // Aplicar rotacion
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+
+    // Aplicar traslacion
+    XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);
+
+    // Componer la matriz final en el orden: scale -> rotation -> translation
+    matrix = scaleMatrix * rotationMatrix * translationMatrix;
+    worldMatrix = matrix;
   }
 
   /**
@@ -68,7 +85,8 @@ public:
    *
    * @return Referencia constante a la posición.
    */
-  const EU::Vector3& getPosition() const { return position; }
+  const EU::Vector3& 
+  getPosition() const { return position; }
 
   /**
    * @brief Establece la posición.
@@ -76,18 +94,16 @@ public:
    * @param newPos Nueva posición en espacio mundo.
    */
   void
-  setPosition(const EU::Vector3& newPos) { 
-    position = newPos;
-    rebuildMatrixFromVectors();
-  }
+  setPosition(const EU::Vector3& newPos) { position = newPos; }         //<---------------
+
 
   /**
    * @brief Obtiene la rotación actual.
    *
    * @return Referencia constante a la rotación (en grados).
    */
-  const
-  EU::Vector3& getRotation() const { return rotation; }
+  const EU::Vector3& 
+  getRotation() const { return rotation; }
 
   /**
    * @brief Establece la rotación.
@@ -95,19 +111,15 @@ public:
    * @param newRot Nueva rotación en grados (Pitch, Yaw, Roll).
    */
   void
-  setRotation(const EU::Vector3& newRot) {
-    rotation = newRot; 
-    rebuildMatrixFromVectors();
-  
-  }
+  setRotation(const EU::Vector3& newRot) { rotation = newRot; }        //<---------------
 
   /**
    * @brief Obtiene la escala actual.
    *
    * @return Referencia constante a la escala.
    */
-  const
-  EU::Vector3& getScale() const { return scale; }
+  const EU::Vector3& 
+  getScale() const { return scale; }
 
   /**
    * @brief Establece la escala.
@@ -115,10 +127,7 @@ public:
    * @param newScale Nueva escala por eje.
    */
   void
-  setScale(const EU::Vector3& newScale) {
-    scale = newScale;
-    rebuildMatrixFromVectors();
-  }
+  setScale(const EU::Vector3& newScale) { scale = newScale; }        //<---------------
 
   /**
    * @brief Establece posición, rotación y escala simultáneamente.
@@ -134,66 +143,41 @@ public:
     position = newPos;
     rotation = newRot;
     scale = newSca;
-    rebuildMatrixFromVectors();
   }
 
+  // Método para trasladar la posición del objeto
+  // @param translation: Vector que representa la cantidad de traslado en cada eje
+  void
+  translate(const EU::Vector3& translation);
+
   /**
-   * @brief Reconstruye la matriz de transformación a partir de los vectores.
-   *
-   * Debe llamarse únicamente cuando el objeto se modifica por código
-   * (por ejemplo física, IA o animaciones).
-   *
-   * El orden de multiplicación es:
-   * Scale * Rotation * Translation
-   */
-  void 
-  rebuildMatrixFromVectors() {
+ * @brief Reconstruye la matriz de transformación local a partir de los vectores de posición, rotación y escala.
+ *
+ * Este método compone la matriz en el orden: escala -> rotación -> traslación.
+ * Es útil cuando se modifican los vectores manualmente y se requiere actualizar la matriz.
+ */
+  void rebuildMatrixFromVectors() {
+    // Aplicar escala
     XMMATRIX scaleMatrix = XMMatrixScaling(scale.x, scale.y, scale.z);
-    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(
-      XMConvertToRadians(rotation.x),
-      XMConvertToRadians(rotation.y),
-      XMConvertToRadians(rotation.z)
-    );
+
+    // Aplicar rotación (en radianes)
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+
+    // Aplicar traslación
     XMMATRIX translationMatrix = XMMatrixTranslation(position.x, position.y, position.z);
 
+    // Componer la matriz final en el orden: scale -> rotation -> translation
     matrix = scaleMatrix * rotationMatrix * translationMatrix;
+    worldMatrix = matrix;
   }
 
-  /**
-   * @brief Aplica una traslación incremental al Transform.
-   *
-   * @param translation Vector de desplazamiento.
-   *
-   * @note Implementación definida en el archivo .cpp.
-   */
-  void 
-  transform(const EU::Vector3& translation); // (Asumo que implementas esto en un .cpp)
 
 private:
-
-  /**
-   * @brief Posición en espacio mundo.
-   */
-  EU::Vector3 position;
-
-  /**
-   * @brief Rotación en grados (Pitch, Yaw, Roll).
-   */
-  EU::Vector3 rotation;
-
-  /**
-   * @brief Escala por eje.
-   */
-  EU::Vector3 scale;
+  EU::Vector3 position;  // Posición del objeto
+  EU::Vector3 rotation;  // Rotación del objeto
+  EU::Vector3 scale;     // Escala del objeto
 
 public:
-
-  /**
-   * @brief Matriz de transformación final.
-   *
-   * Puede ser modificada externamente (ej. ImGuizmo).
-   */
-  XMMATRIX matrix;
-
-  XMMATRIX worldMatrix;
+  XMMATRIX matrix;    // Matriz de transformación local
+  XMMATRIX worldMatrix; // Matriz de transformación world
 };

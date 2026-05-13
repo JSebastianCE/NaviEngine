@@ -8,8 +8,7 @@ class MaterialInstance;
  * @enum MaterialDomain
  * @brief Define el dominio del material dentro del pipeline de render.
  */
-enum 
-class
+enum class
   MaterialDomain {
   /** @brief Material completamente opaco. */
   Opaque = 0,
@@ -25,8 +24,7 @@ class
  * @enum BlendMode
  * @brief Define el modo de mezcla de colores.
  */
-enum 
-class
+enum class
   BlendMode {
   /** @brief Sin blending (opaco). */
   Opaque = 0,
@@ -45,8 +43,7 @@ class
  * @enum RenderPassType
  * @brief Define los distintos passes del pipeline de render.
  */
-enum
-class
+enum class
   RenderPassType {
   /** @brief Pass de sombras. */
   Shadow = 0,
@@ -68,8 +65,7 @@ class
  * @enum LightType
  * @brief Tipos de luz soportados.
  */
-enum 
-class
+enum class
   LightType {
   /** @brief Luz direccional. */
   Directional = 0,

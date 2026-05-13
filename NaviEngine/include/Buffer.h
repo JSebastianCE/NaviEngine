@@ -102,12 +102,11 @@ public:
   createBuffer(Device& device,
                 D3D11_BUFFER_DESC& desc,
                 D3D11_SUBRESOURCE_DATA* initData);
-
-private:
-
-  /** @brief Puntero al buffer de Direct3D. */
+public:
+ /** @brief Puntero al buffer de Direct3D. */
   ID3D11Buffer* m_buffer = nullptr;
 
+private:
   /** @brief Tamaño en bytes de cada elemento del buffer (stride). */
   unsigned int m_stride = 0;
 
@@ -116,5 +115,4 @@ private:
 
   /** @brief Bandera que indica el tipo de enlace (bind flag) del buffer. */
   unsigned int m_bindFlag = 0;
-
 };

@@ -10,8 +10,7 @@ SamplerState::init(Device& device) {
   }
 
   // Create the sample state
-  D3D11_SAMPLER_DESC sampDesc;
-  ZeroMemory(&sampDesc, sizeof(sampDesc));
+  D3D11_SAMPLER_DESC sampDesc = {};
   sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
   sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
   sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -38,14 +37,14 @@ SamplerState::update() {
 void
 SamplerState::render(DeviceContext& deviceContext,
                      unsigned int StartSlot,
-                     unsigned int NumSampler) {
+                     unsigned int NumSamplers) {
 
   if (!m_sampler) {
     ERROR("SamplerState", "render", "SamplerState is nullptr");
     return;
   }
 
-  deviceContext.PSSetSamplers(StartSlot, NumSampler, &m_sampler);
+  deviceContext.PSSetSamplers(StartSlot, NumSamplers, &m_sampler);
 }
 
 void

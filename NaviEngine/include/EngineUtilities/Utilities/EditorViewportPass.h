@@ -146,4 +146,5 @@ private:
 
 	/** @brief Alto del viewport. */
 	unsigned int      m_height = 1;
+
 };

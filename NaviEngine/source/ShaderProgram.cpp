@@ -70,7 +70,7 @@ ShaderProgram::CreateInputLayout(Device& device,
 HRESULT
 ShaderProgram::CreateShader(Device& device, ShaderType type) {
   if (!device.m_device) {
-    ERROR("ShaderProgram", "CreateSHader", "Device is null");
+    ERROR("ShaderProgram", "CreateShader", "Device is null");
     return E_POINTER;
   }
   if (m_shaderFileName.empty()) {
@@ -168,7 +168,7 @@ ShaderProgram::CompileShaderFromFile(char* szFileName,
 
   dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
-  ID3DBlob* pErrorBlob;
+  ID3DBlob* pErrorBlob = nullptr;
   hr = D3DX11CompileFromFile(szFileName, 
                             nullptr, 
                             nullptr, 
@@ -188,12 +188,12 @@ ShaderProgram::CompileShaderFromFile(char* szFileName,
       OutputDebugStringA(static_cast<const char*>(pErrorBlob->GetBufferPointer()));
       OutputDebugStringA("\n===============================================\n");
 
-      ERROR("ShaderProgram", "CompileShaderFromfile", "Failed to compile shader (revisa la consola arriba)");
+      ERROR("ShaderProgram", "CompileShaderFromFile", "Failed to compile shader (revisa la consola arriba)");
 
       pErrorBlob->Release();
     }
     else {
-      ERROR("ShaderProgram", "CompileShaderFromfile", "Failed to compile shader. No error message available");
+      ERROR("ShaderProgram", "CompileShaderFromFile", "Failed to compile shader. No error message available");
     }
     return hr;
   }
@@ -206,7 +206,7 @@ ShaderProgram::CompileShaderFromFile(char* szFileName,
 void
 ShaderProgram::render(DeviceContext& deviceContext) {
   if (!m_VertexShader || !m_PixelShader || !m_inputLayout.m_inputLayout) {
-    ERROR("ShaderPRogram", "render", "Shader or InputLayout not initialized");
+    ERROR("ShaderProgram", "render", "Shader or InputLayout not initialized");
     return;
   }
 

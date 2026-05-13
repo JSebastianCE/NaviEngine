@@ -111,7 +111,7 @@ public:
    */
   HRESULT
   CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* pInputElementDescs,
-                    UINT NumElements,
+                    unsigned int NumElements,
                     const void* pShaderBytecodeWithInputSignature,
                     unsigned int BytecodeLength, //unsigned
                     ID3D11InputLayout** ppInputLayout);

@@ -455,8 +455,6 @@
     <ClCompile Include="source\EditorViewportPass.cpp" />
     <ClCompile Include="source\InputLayout.cpp" />
     <ClCompile Include="source\Model3D.cpp" />
-    <ClCompile Include="source\ModelLoader.cpp" />
-    <ClCompile Include="source\ParserOBJ.cpp" />
     <ClCompile Include="source\RasterizerState.cpp" />
     <ClCompile Include="source\Rendering\ForwardRenderer.cpp" />
     <ClCompile Include="source\Rendering\MaterialInstance.cpp" />
@@ -491,6 +489,8 @@
     <ClInclude Include="include\ECS\Actor.h" />
     <ClInclude Include="include\ECS\Component.h" />
     <ClInclude Include="include\ECS\Entity.h" />
+    <ClInclude Include="include\ECS\LightComponent.h" />
+    <ClInclude Include="include\ECS\MeshRendererComponent.h" />
     <ClInclude Include="include\ECS\Transform.h" />
     <ClInclude Include="include\EngineUtilities\Memory\TSharedPointer.h" />
     <ClInclude Include="include\EngineUtilities\Memory\TStaticPtr.h" />
@@ -498,9 +498,11 @@
     <ClInclude Include="include\EngineUtilities\Memory\TWeakPointer.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\Camera.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\EditorViewportPass.h" />
+    <ClInclude Include="include\EngineUtilities\Utilities\EngineMath.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\LayoutBuilder.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\Skybox.h" />
     <ClInclude Include="include\EngineUtilities\Utilities\SkyboxComponent.h" />
+    <ClInclude Include="include\EngineUtilities\Vectors\Quaternion.h" />
     <ClInclude Include="include\EngineUtilities\Vectors\Vector2.h" />
     <ClInclude Include="include\EngineUtilities\Vectors\Vector3.h" />
     <ClInclude Include="include\EngineUtilities\Vectors\Vector4.h" />
@@ -508,9 +510,6 @@
     <ClInclude Include="include\IResource.h" />
     <ClInclude Include="include\MeshComponent.h" />
     <ClInclude Include="include\Model3D.h" />
-    <ClInclude Include="include\ModelLoader.h" />
-    <ClInclude Include="include\OBJ_Loader.h" />
-    <ClInclude Include="include\ParserOBJ.h" />
     <ClInclude Include="include\Prerequisites.h" />
     <ClInclude Include="include\RasterizerState.h" />
     <ClInclude Include="include\Rendering\ForwardRenderer.h" />
@@ -520,6 +519,7 @@
     <ClInclude Include="include\Rendering\RenderScene.h" />
     <ClInclude Include="include\Rendering\RenderTypes.h" />
     <ClInclude Include="include\RenderTargetView.h" />
+    <ClInclude Include="include\Resource.h" />
     <ClInclude Include="include\ResourceManager.h" />
     <ClInclude Include="include\SamplerState.h" />
     <ClInclude Include="include\SceneGraph\HierarchyComponent.h" />
@@ -544,6 +544,11 @@
       <FileType>Document</FileType>
     </None>
     <None Include="bin\PBRShader.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\ShadowMap.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

@@ -9,7 +9,6 @@
 #include "DepthStencilState.h"
 #include "EngineUtilities\Utilities\Camera.h"
 #include "ECS\Actor.h"
-#include "EngineUtilities\Utilities\LayoutBuilder.h"
 
 
 class Device;
@@ -93,5 +92,4 @@ private:
 
 	/** @brief Actor asociado al skybox. */
 	EU::TSharedPointer<Actor> m_skybox;
-
 };

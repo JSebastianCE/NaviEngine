@@ -1,19 +1,11 @@
 #pragma once
 #include "Prerequisites.h"
 
-/**
- * @class Entity
- * @brief Declaración adelantada de una entidad del sistema.
- */
-class 
-Entity;
 
-/**
- * @class DeviceContext
- * @brief Declaración adelantada del contexto de renderizado.
- */
-class 
-DeviceContext;
+class Entity;
+class DeviceContext;
+class Camera;
+class RenderScene;
 
 /**
  * @class SceneGraph
@@ -110,6 +102,9 @@ public:
 	 */
 	void
 	render(DeviceContext& deviceContext);
+
+	void
+	gatherRenderScene(RenderScene& outScene, const Camera& camera);
 
 	/**
 	 * @brief Libera los recursos asociados al grafo de escena.
