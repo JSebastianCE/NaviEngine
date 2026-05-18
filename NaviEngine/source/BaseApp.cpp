@@ -211,10 +211,10 @@ BaseApp::init() {
   // --------------------------------------------------------------------------
   LayoutBuilder builder;
   builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
-    .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
-    .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
-    .Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
-    .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+          .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+          .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+          .Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+          .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 
   hr = m_shaderProgram.init(m_device, "PBRShader.hlsl", builder);
   if (FAILED(hr)) {

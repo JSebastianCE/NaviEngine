@@ -86,28 +86,6 @@ private:
   Texture             m_AOSRV;
   Texture             m_NormalSRV;
 
-  // Texturas Body
-  Texture m_BodyAlbedoSRV;
-  Texture m_BodyMetallicSRV;
-  Texture m_BodyRoughnessSRV;
-  Texture m_BodyAOSRV;
-  Texture m_BodyNormalSRV;
-
-  // Texturas Glass
-  Texture m_GlassAlbedoSRV;
-  Texture m_GlassMetallicSRV;
-  Texture m_GlassRoughnessSRV;
-  Texture m_GlassAOSRV;
-  Texture m_GlassNormalSRV;
-
-  // Texturas Head
-  Texture m_HeadAlbedoSRV;
-  Texture m_HeadMetallicSRV;
-  Texture m_HeadRoughnessSRV;
-  Texture m_HeadAOSRV;
-  Texture m_HeadNormalSRV;
-  Texture m_HeadSSSSRV;
-
   // Recursos generales
   Texture             m_skyboxTex;
 

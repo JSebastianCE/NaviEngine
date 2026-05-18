@@ -717,7 +717,7 @@ GUI::inspectorContainer(EU::TSharedPointer<Actor> actor) {
     transform->setPosition(EU::Vector3(posArr[0], posArr[1], posArr[2]));
   }
 
-  if (rot.x != posArr[0] || rot.y != rotArr[1] || rot.z != rotArr[2]) {
+  if (rot.x != rotArr[0] || rot.y != rotArr[1] || rot.z != rotArr[2]) {
     transform->setRotation(EU::Vector3(rotArr[0], rotArr[1], rotArr[2]));
   }
 
