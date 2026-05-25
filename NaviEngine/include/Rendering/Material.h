@@ -62,6 +62,7 @@ public:
 	void 
 	setBlendMode(BlendMode blendMode) { m_blendMode = blendMode; }
 
+
 	/**
 	 * @brief Obtiene el shader del material.
 	 * @return Puntero a ShaderProgram.
