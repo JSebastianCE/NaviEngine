@@ -915,6 +915,5 @@ BaseApp::loadScene(const std::string& path)
       break;
     }
   }
-
   return true;
 }

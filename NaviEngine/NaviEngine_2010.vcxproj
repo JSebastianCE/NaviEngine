@@ -512,6 +512,7 @@
     <ClInclude Include="include\Model3D.h" />
     <ClInclude Include="include\Prerequisites.h" />
     <ClInclude Include="include\RasterizerState.h" />
+    <ClInclude Include="include\Rendering\DeferredRenderer.h" />
     <ClInclude Include="include\Rendering\ForwardRenderer.h" />
     <ClInclude Include="include\Rendering\ISceneRenderer.h" />
     <ClInclude Include="include\Rendering\Material.h" />
