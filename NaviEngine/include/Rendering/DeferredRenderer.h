@@ -239,7 +239,7 @@ private:
    * @brief Crea los recursos necesarios para Shadow Mapping.
    */
   HRESULT 
-  createShadoeResources(Device& device);
+  createShadowResources(Device& device);
 
   /**
    * @brief Crea los recursos asociados al G-Buffer.
@@ -275,7 +275,7 @@ private:
    * @brief Crea los estados de mezcla utilizados por el renderizador.
    */
   HRESULT 
-  createBlendState(Device& device);
+  createBlendStates(Device& device);
 
   /**
    * @brief Obtiene el Blend State apropiado para un material.

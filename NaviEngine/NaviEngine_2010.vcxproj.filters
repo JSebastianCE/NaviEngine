@@ -360,6 +360,12 @@
     <ClCompile Include="source\Rendering\RenderScene.cpp">
       <Filter>source\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="source\Rendering\RenderPipeline.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Rendering\DeferredRenderer.cpp">
+      <Filter>source\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\NaviEngine.fx">
