@@ -108,6 +108,16 @@ public:
   setTextures(std::vector<Texture> textures) { m_textures = textures; }
 
   /**
+   * @brief Obtiene las mallas internas del actor.
+   */
+  const std::vector<MeshComponent>& getMeshes() const { return m_meshes; }
+
+  /**
+   * @brief Obtiene las texturas internas del actor.
+   */
+  const std::vector<Texture>& getTextures() const { return m_textures; }
+
+  /**
    * @brief Define si el actor puede proyectar sombras.
    * @param v Valor booleano.
    */

@@ -18,6 +18,106 @@ static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
 
 namespace {
 
+  bool GetSRVSize(ID3D11ShaderResourceView* srv, float& outW, float& outH) {
+    outW = outH = 0.0f;
+    if (!srv) return false;
+
+    ID3D11Resource* resource = nullptr;
+    srv->GetResource(&resource);
+    if (!resource) return false;
+
+    ID3D11Texture2D* texture = nullptr;
+    HRESULT hr = resource->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&texture));
+    bool ok = false;
+    if (SUCCEEDED(hr) && texture) {
+      D3D11_TEXTURE2D_DESC desc;
+      texture->GetDesc(&desc);
+      outW = static_cast<float>(desc.Width);
+      outH = static_cast<float>(desc.Height);
+      ok = (outW > 0.0f && outH > 0.0f);
+      texture->Release();
+    }
+    resource->Release();
+    return ok;
+  }
+
+  // Dibuja 'srv' dentro de 'region' conservando su aspect ratio (centrado, con margen).
+  void ImageAspectFit(ID3D11ShaderResourceView* srv, ImVec2 region) {
+    if (region.x < 1.0f) region.x = 1.0f;
+    if (region.y < 1.0f) region.y = 1.0f;
+
+    if (!srv) {
+      ImGui::Dummy(region);
+      return;
+    }
+
+    float texW = 0.0f, texH = 0.0f;
+    if (!GetSRVSize(srv, texW, texH)) {
+      ImGui::Image((ImTextureID)srv, region); // fallback
+      return;
+    }
+
+    const float texAspect = texW / texH;
+    const float regionAspect = region.x / region.y;
+
+    ImVec2 drawSize = region;
+    if (regionAspect > texAspect) {
+      drawSize.y = region.y;
+      drawSize.x = region.y * texAspect;
+    }
+    else {
+      drawSize.x = region.x;
+      drawSize.y = region.x / texAspect;
+    }
+
+    const ImVec2 cursor = ImGui::GetCursorPos();
+    const ImVec2 offset((region.x - drawSize.x) * 0.5f, (region.y - drawSize.y) * 0.5f);
+    ImGui::SetCursorPos(ImVec2(cursor.x + offset.x, cursor.y + offset.y));
+    ImGui::Image((ImTextureID)srv, drawSize);
+  }
+
+  // Llena TODA la region conservando proporciones (recorta el sobrante con UVs).
+  void ImageAspectFill(ID3D11ShaderResourceView* srv, ImVec2 region) {
+    if (region.x < 1.0f) region.x = 1.0f;
+    if (region.y < 1.0f) region.y = 1.0f;
+
+    if (!srv) {
+      ImGui::Dummy(region);
+      return;
+    }
+
+    float texW = 0.0f, texH = 0.0f;
+    if (!GetSRVSize(srv, texW, texH)) {
+      ImGui::Image((ImTextureID)srv, region); // fallback
+      return;
+    }
+
+    const float texAspect = texW / texH;
+    const float regionAspect = region.x / region.y;
+
+    ImVec2 uv0(0.0f, 0.0f);
+    ImVec2 uv1(1.0f, 1.0f);
+
+    if (regionAspect > texAspect) {
+      // La caja es mas ancha que la textura -> recorta arriba/abajo.
+      const float visible = texAspect / regionAspect; // fraccion visible en Y
+      const float off = (1.0f - visible) * 0.5f;
+      uv0.y = off;
+      uv1.y = 1.0f - off;
+    }
+    else {
+      // La caja es mas alta que la textura -> recorta izquierda/derecha.
+      const float visible = regionAspect / texAspect; // fraccion visible en X
+      const float off = (1.0f - visible) * 0.5f;
+      uv0.x = off;
+      uv1.x = 1.0f - off;
+    }
+
+    ImGui::Image((ImTextureID)srv, region, uv0, uv1);
+  }
+
+
+
   float RadToDeg(float radians)
   {
     return XMConvertToDegrees(radians);
@@ -91,8 +191,9 @@ GUI::init(Window& window, Device& device, DeviceContext& deviceContext) {
     style.Colors[ImGuiCol_WindowBg].w = 0.82f;
   }
 
-  // Verde oscuro tipo liquid glass
-  appleLiquidStyle(0.78f, ImVec4(0.20f, 0.72f, 0.42f, 1.0f));
+  // Tema: fondo naranja translucido + interactuables verde claro translucido.
+  // El "accent" es el verde de marcas (checkmark / slider).
+  appleLiquidStyle(0.80f, ImVec4(0.50f, 0.88f, 0.45f, 1.0f));
 
   ImGui_ImplWin32_Init(window.m_hWnd);
   ImGui_ImplDX11_Init(device.m_device, deviceContext.m_deviceContext);
@@ -117,7 +218,7 @@ GUI::update(Viewport& viewport, Window& window) {
 
   ImGuizmo::SetOrthographic(false);
 
-  drawStudioTopRibbon();
+  //drawStudioTopRibbon();
   drawEditorDockspace();
   closeApp();
   drawGizmoToolbar();
@@ -176,27 +277,30 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
 
   const float o = opacity;
 
-  const ImVec4 textMain = ImVec4(0.92f, 0.98f, 0.94f, 0.96f);
-  const ImVec4 textDisabled = ImVec4(0.66f, 0.78f, 0.70f, 0.75f);
+  // Texto calido (sobre fondo naranja)
+  const ImVec4 textMain = ImVec4(1.00f, 0.97f, 0.92f, 0.96f);
+  const ImVec4 textDisabled = ImVec4(0.92f, 0.82f, 0.70f, 0.78f);
 
-  const ImVec4 bgMain = ImVec4(0.05f, 0.11f, 0.08f, o);
-  const ImVec4 bgChild = ImVec4(0.07f, 0.14f, 0.10f, o * 0.92f);
-  const ImVec4 bgPopup = ImVec4(0.08f, 0.16f, 0.11f, o * 0.98f);
+  // Fondos NARANJA translucido
+  const ImVec4 bgMain = ImVec4(0.85f, 0.38f, 0.08f, o);
+  const ImVec4 bgChild = ImVec4(0.78f, 0.34f, 0.06f, o * 0.92f);
+  const ImVec4 bgPopup = ImVec4(0.88f, 0.42f, 0.10f, o * 0.98f);
 
-  const ImVec4 frame = ImVec4(0.10f, 0.20f, 0.14f, 0.70f);
-  const ImVec4 frameHover = ImVec4(0.13f, 0.28f, 0.18f, 0.82f);
-  const ImVec4 frameActive = ImVec4(0.16f, 0.34f, 0.22f, 0.95f);
+  // Interactuables VERDE claro translucido
+  const ImVec4 frame = ImVec4(0.55f, 0.85f, 0.45f, 0.26f);
+  const ImVec4 frameHover = ImVec4(0.62f, 0.92f, 0.52f, 0.44f);
+  const ImVec4 frameActive = ImVec4(0.68f, 0.96f, 0.58f, 0.60f);
 
-  const ImVec4 button = ImVec4(0.10f, 0.22f, 0.15f, 0.62f);
-  const ImVec4 buttonHover = ImVec4(0.14f, 0.30f, 0.20f, 0.82f);
-  const ImVec4 buttonActive = ImVec4(0.18f, 0.38f, 0.24f, 0.96f);
+  const ImVec4 button = ImVec4(0.55f, 0.85f, 0.45f, 0.30f);
+  const ImVec4 buttonHover = ImVec4(0.62f, 0.92f, 0.52f, 0.48f);
+  const ImVec4 buttonActive = ImVec4(0.68f, 0.96f, 0.58f, 0.64f);
 
-  const ImVec4 header = ImVec4(0.09f, 0.20f, 0.14f, 0.66f);
-  const ImVec4 headerHover = ImVec4(0.13f, 0.28f, 0.19f, 0.84f);
-  const ImVec4 headerActive = ImVec4(0.18f, 0.36f, 0.24f, 0.96f);
+  const ImVec4 header = ImVec4(0.55f, 0.85f, 0.45f, 0.26f);
+  const ImVec4 headerHover = ImVec4(0.62f, 0.92f, 0.52f, 0.44f);
+  const ImVec4 headerActive = ImVec4(0.68f, 0.96f, 0.58f, 0.58f);
 
-  const ImVec4 border = ImVec4(0.40f, 0.78f, 0.56f, 0.18f);
-  const ImVec4 borderSoft = ImVec4(0.70f, 0.95f, 0.80f, 0.05f);
+  const ImVec4 border = ImVec4(0.55f, 0.90f, 0.50f, 0.22f);
+  const ImVec4 borderSoft = ImVec4(1.00f, 0.95f, 0.85f, 0.05f);
 
   colors[ImGuiCol_Text] = textMain;
   colors[ImGuiCol_TextDisabled] = textDisabled;
@@ -211,10 +315,10 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
   colors[ImGuiCol_FrameBgHovered] = frameHover;
   colors[ImGuiCol_FrameBgActive] = frameActive;
 
-  colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.10f, 0.07f, 0.86f);
-  colors[ImGuiCol_TitleBgActive] = ImVec4(0.07f, 0.16f, 0.11f, 0.96f);
-  colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.03f, 0.08f, 0.06f, 0.70f);
-  colors[ImGuiCol_MenuBarBg] = ImVec4(0.05f, 0.12f, 0.08f, 0.90f);
+  colors[ImGuiCol_TitleBg] = ImVec4(0.70f, 0.30f, 0.05f, 0.90f);
+  colors[ImGuiCol_TitleBgActive] = ImVec4(0.82f, 0.38f, 0.08f, 0.98f);
+  colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.60f, 0.26f, 0.04f, 0.75f);
+  colors[ImGuiCol_MenuBarBg] = ImVec4(0.80f, 0.36f, 0.07f, 0.92f);
 
   colors[ImGuiCol_Button] = button;
   colors[ImGuiCol_ButtonHovered] = buttonHover;
@@ -224,40 +328,40 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
   colors[ImGuiCol_HeaderHovered] = headerHover;
   colors[ImGuiCol_HeaderActive] = headerActive;
 
-  colors[ImGuiCol_Tab] = ImVec4(0.08f, 0.18f, 0.12f, 0.70f);
-  colors[ImGuiCol_TabHovered] = ImVec4(0.12f, 0.28f, 0.18f, 0.86f);
-  colors[ImGuiCol_TabActive] = ImVec4(0.16f, 0.34f, 0.22f, 0.96f);
-  colors[ImGuiCol_TabUnfocused] = ImVec4(0.06f, 0.14f, 0.10f, 0.58f);
-  colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.10f, 0.22f, 0.15f, 0.75f);
+  colors[ImGuiCol_Tab] = ImVec4(0.55f, 0.85f, 0.45f, 0.24f);
+  colors[ImGuiCol_TabHovered] = ImVec4(0.62f, 0.92f, 0.52f, 0.44f);
+  colors[ImGuiCol_TabActive] = ImVec4(0.68f, 0.96f, 0.58f, 0.60f);
+  colors[ImGuiCol_TabUnfocused] = ImVec4(0.70f, 0.32f, 0.06f, 0.55f);
+  colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.78f, 0.36f, 0.07f, 0.72f);
 
   colors[ImGuiCol_CheckMark] = accent;
   colors[ImGuiCol_SliderGrab] = accent;
   colors[ImGuiCol_SliderGrabActive] = ImVec4(
-    accent.x + 0.08f,
-    accent.y + 0.08f,
-    accent.z + 0.08f,
+    accent.x + 0.06f,
+    accent.y + 0.06f,
+    accent.z + 0.06f,
     1.0f
   );
 
-  colors[ImGuiCol_Separator] = ImVec4(0.40f, 0.78f, 0.56f, 0.16f);
-  colors[ImGuiCol_SeparatorHovered] = ImVec4(0.40f, 0.78f, 0.56f, 0.34f);
-  colors[ImGuiCol_SeparatorActive] = ImVec4(0.40f, 0.78f, 0.56f, 0.48f);
+  colors[ImGuiCol_Separator] = ImVec4(0.55f, 0.90f, 0.50f, 0.20f);
+  colors[ImGuiCol_SeparatorHovered] = ImVec4(0.62f, 0.92f, 0.52f, 0.40f);
+  colors[ImGuiCol_SeparatorActive] = ImVec4(0.68f, 0.96f, 0.58f, 0.55f);
 
   colors[ImGuiCol_ScrollbarBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-  colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.40f, 0.78f, 0.56f, 0.18f);
-  colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.78f, 0.56f, 0.30f);
-  colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.40f, 0.78f, 0.56f, 0.42f);
+  colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.55f, 0.90f, 0.50f, 0.22f);
+  colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.62f, 0.92f, 0.52f, 0.36f);
+  colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.68f, 0.96f, 0.58f, 0.48f);
 
-  colors[ImGuiCol_DockingPreview] = ImVec4(accent.x, accent.y, accent.z, 0.30f);
-  colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.03f, 0.07f, 0.05f, 0.65f);
+  colors[ImGuiCol_DockingPreview] = ImVec4(accent.x, accent.y, accent.z, 0.32f);
+  colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.55f, 0.25f, 0.05f, 0.65f);
 
-  colors[ImGuiCol_TableHeaderBg] = ImVec4(0.08f, 0.18f, 0.12f, 0.85f);
-  colors[ImGuiCol_TableBorderStrong] = ImVec4(0.40f, 0.78f, 0.56f, 0.16f);
-  colors[ImGuiCol_TableBorderLight] = ImVec4(0.40f, 0.78f, 0.56f, 0.08f);
+  colors[ImGuiCol_TableHeaderBg] = ImVec4(0.78f, 0.34f, 0.06f, 0.88f);
+  colors[ImGuiCol_TableBorderStrong] = ImVec4(0.55f, 0.90f, 0.50f, 0.20f);
+  colors[ImGuiCol_TableBorderLight] = ImVec4(0.55f, 0.90f, 0.50f, 0.10f);
   colors[ImGuiCol_TableRowBg] = ImVec4(1, 1, 1, 0.01f);
-  colors[ImGuiCol_TableRowBgAlt] = ImVec4(1, 1, 1, 0.03f);
+  colors[ImGuiCol_TableRowBgAlt] = ImVec4(1, 1, 1, 0.04f);
 
-  colors[ImGuiCol_TextSelectedBg] = ImVec4(accent.x, accent.y, accent.z, 0.22f);
+  colors[ImGuiCol_TextSelectedBg] = ImVec4(accent.x, accent.y, accent.z, 0.24f);
   colors[ImGuiCol_NavHighlight] = ImVec4(accent.x, accent.y, accent.z, 0.44f);
   colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1, 1, 1, 0.20f);
   colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0, 0, 0, 0.20f);
@@ -563,8 +667,8 @@ GUI::closeApp() {
   ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
   if (ImGui::BeginPopupModal("Exit?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-    ImGui::Text("Estas a punto de salir de la aplicacion.\nEstas seguro?\n\n");
-    ImGui::Separator();
+    ImGui::Text("Estas a punto de salir de la aplicacion.Estas seguro ?");
+      ImGui::Separator();
 
     if (ImGui::Button("OK", ImVec2(120, 0))) {
       exit(0);
@@ -660,7 +764,16 @@ GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
     if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
       LightData& data = light->getLightData();
 
-      ImGui::Text("Type: %s", GetLightTypeLabel(data.type));
+      static const char* kLightTypes[] = { "Directional", "Point", "Spot" };
+      int currentType = static_cast<int>(data.type);
+      if (currentType < 0 || currentType > 2) currentType = 0;
+      if (ImGui::Combo("Type", &currentType, kLightTypes, IM_ARRAYSIZE(kLightTypes))) {
+        data.type = static_cast<LightType>(currentType);
+        if (data.type == LightType::Point && data.range <= 0.0f) {
+          data.range = 12.0f;
+        }
+      }
+
       ImGui::ColorEdit3("Color", &data.color.x);
       ImGui::SliderFloat("Intensity", &data.intensity, 0.0f, 10.0f);
 
@@ -916,7 +1029,7 @@ GUI::drawStudioTopRibbon()
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 4.0f));
-  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.05f, 0.12f, 0.08f, 0.78f));
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.80f, 0.36f, 0.07f, 0.85f));
 
   if (ImGui::Begin("##StudioMenuBar", nullptr, menuFlags))
   {
@@ -972,17 +1085,17 @@ GUI::drawStudioTopRibbon()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 6.0f));
-  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.14f, 0.10f, 0.82f));
-  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.10f, 0.22f, 0.15f, 0.62f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.14f, 0.30f, 0.20f, 0.82f));
-  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.18f, 0.38f, 0.24f, 0.96f));
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.84f, 0.39f, 0.09f, 0.85f));
+  ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.85f, 0.45f, 0.30f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.62f, 0.92f, 0.52f, 0.48f));
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.68f, 0.96f, 0.58f, 0.64f));
 
   if (ImGui::Begin("##StudioRibbon", nullptr, ribbonFlags))
   {
     auto ribbonButton = [&](const char* id, const char* topText, const char* bottomText, ImVec2 size, bool active = false) -> bool
       {
         if (active)
-          ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.24f, 0.34f, 0.58f, 1.0f));
+          ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.30f, 0.62f, 0.28f, 1.0f));
 
         bool pressed = ImGui::Button(id, size);
 
@@ -1023,7 +1136,7 @@ GUI::drawStudioTopRibbon()
         draw->AddLine(
           ImVec2(p.x, p.y),
           ImVec2(p.x, p.y + 48.0f),
-          IM_COL32(80, 80, 90, 255),
+          IM_COL32(120, 200, 110, 255),
           1.0f
         );
 
@@ -1046,11 +1159,17 @@ GUI::drawStudioTopRibbon()
 
     separatorGroup();
 
+    if (ribbonButton("##CreateLight", "Light", "Create", btnSize, false))
+      m_requestCreateLightActor = true;
+
+    separatorGroup();
+
     ribbonButton("##Explorer", "Explorer", "Panel", btnSize, false);
     ImGui::SameLine();
     ribbonButton("##Properties", "Properties", "Panel", btnSize, false);
     ImGui::SameLine();
     ribbonButton("##Toolbox", "Toolbox", "Assets", btnSize, false);
+
   }
 
   ImGui::End();
@@ -1110,43 +1229,316 @@ GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
 
   ImGui::End();
   ImGui::PopStyleVar();
+
+  // --- NUEVO: OVERLAY DE ESTADÍSTICAS ESTILO UNREAL ---
+// Nos posicionamos de forma relativa dentro del propio panel del Viewport
+  ImVec2 window_pos = ImGui::GetWindowPos();
+  ImVec2 stats_pos = ImVec2(window_pos.x + 20.0f, window_pos.y + 40.0f); // Margen superior izquierdo
+
+  ImGui::SetNextWindowPos(stats_pos, ImGuiCond_Always);
+  ImGui::SetNextWindowBgAlpha(0.35f); // Fondo muy transparente
+
+  ImGuiWindowFlags stats_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+    ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing |
+    ImGuiWindowFlags_NoNav;
+
+  if (ImGui::Begin("##ViewportStats", nullptr, stats_flags)) {
+    float fps = ImGui::GetIO().Framerate;
+    float ms = 1000.0f / fps;
+
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.4f, 1.0f), "FPS: %.1f", fps);
+    ImGui::Text("Frame Time: %.2f ms", ms);
+
+    // Como no pasamos la lista de actores aquí, podemos dejar un contador visual genérico temporal:
+    ImGui::TextDisabled("Engine DX11 Ready");
+    ImGui::End();
+  }
+
 }
 
 void
-GUI::drawRenderDebugPanel(ID3D11ShaderResourceView* preShadowSRV,
-  ID3D11ShaderResourceView* finalViewportSRV,
-  ID3D11ShaderResourceView* shadowMapSRV)
+GUI::drawViewportLightIcons(const std::vector<EU::TSharedPointer<Actor>>& actors,
+  Camera& camera,
+  ID3D11ShaderResourceView* lightIconSRV)
 {
-  ImGui::Begin("Render Debug");
-
-  ImGui::Text("Final Viewport");
-  if (finalViewportSRV) {
-    ImGui::Image((ImTextureID)(intptr_t)finalViewportSRV, ImVec2(320, 180));
+  if (m_viewportSize.x <= 1.0f || m_viewportSize.y <= 1.0f) {
+    return;
   }
 
-  ImGui::Separator();
+  ImDrawList* drawList = ImGui::GetForegroundDrawList();
+  const ImVec2 iconSize(40.0f, 40.0f); // mas grande para que se note
 
-  ImGui::Text("Shadow Map");
-  if (shadowMapSRV) {
-    ImGui::Image((ImTextureID)(intptr_t)shadowMapSRV, ImVec2(320, 180));
+  for (int i = 0; i < static_cast<int>(actors.size()); ++i) {
+    const auto& actor = actors[i];
+    if (actor.isNull() || actor->getComponent<LightComponent>().isNull()) {
+      continue;
+    }
+
+    auto transform = actor->getComponent<Transform>();
+    if (transform.isNull()) {
+      continue;
+    }
+
+    const EU::Vector3& position = transform->getPosition();
+    XMVECTOR worldPos = XMVectorSet(position.x, position.y, position.z, 1.0f);
+
+    XMVECTOR projected = XMVector3Project(
+      worldPos,
+      m_viewportPos.x, m_viewportPos.y,
+      m_viewportSize.x, m_viewportSize.y,
+      0.0f, 1.0f,
+      camera.getProj(), camera.getView(), XMMatrixIdentity());
+
+    const float sz = XMVectorGetZ(projected);
+    if (sz < 0.0f || sz > 1.0f) continue; // detras de la camara
+
+    ImVec2 center(XMVectorGetX(projected), XMVectorGetY(projected));
+
+    // Marcador SIEMPRE visible (confirma posicion aunque no haya PNG)
+    const bool selected = (selectedActorIndex == i);
+    ImU32 ring = selected ? IM_COL32(170, 255, 150, 255) : IM_COL32(255, 230, 120, 255);
+    drawList->AddCircleFilled(center, 6.0f, IM_COL32(0, 0, 0, 120), 16);
+    drawList->AddCircle(center, iconSize.x * 0.5f, ring, 24, 2.0f);
+
+    // PNG encima (si cargo). Tinte blanco para respetar sus colores.
+    if (lightIconSRV) {
+      ImU32 tint = selected ? IM_COL32(200, 255, 190, 255) : IM_COL32(255, 255, 255, 255);
+      ImVec2 iconMin(center.x - iconSize.x * 0.5f, center.y - iconSize.y * 0.5f);
+      ImVec2 iconMax(center.x + iconSize.x * 0.5f, center.y + iconSize.y * 0.5f);
+      drawList->AddImage((ImTextureID)lightIconSRV, iconMin, iconMax,
+        ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint);
+    }
+
+    // Etiqueta para ubicarla facil
+    drawList->AddText(ImVec2(center.x + iconSize.x * 0.5f + 4.0f, center.y - 8.0f),
+      IM_COL32(255, 255, 255, 230), actor->getName().c_str());
+  }
+}
+
+void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
+  ID3D11ShaderResourceView* normalRoughnessSRV,
+  ID3D11ShaderResourceView* worldAoSRV,
+  ID3D11ShaderResourceView* emissiveAlphaSRV,
+  EU::TSharedPointer<Actor> selectedActor)
+{
+  ImGui::Begin("GBuffer Debug");
+
+  // ---------------------------------------------------------
+  // 1. VISUALIZADOR PRINCIPAL (ARRIBA)
+  // ---------------------------------------------------------
+  ImGui::Text("Modo de Visualizacion:");
+
+  ImGui::RadioButton("Final PBR", &m_deferredDebugViewMode, 0); ImGui::SameLine();
+  ImGui::RadioButton("Albedo", &m_deferredDebugViewMode, 1); ImGui::SameLine();
+  ImGui::RadioButton("Normal", &m_deferredDebugViewMode, 2); ImGui::SameLine();
+  ImGui::RadioButton("Posicion", &m_deferredDebugViewMode, 3);
+
+  ImGui::Checkbox("Ver Factor de Sombra", &m_visualizeDeferredShadowFactor);
+  ImGui::Spacing();
+
+  ID3D11ShaderResourceView* mainSRV = nullptr;
+  switch (m_deferredDebugViewMode) {
+  case 0: mainSRV = m_renderDebugFinalSRV ? m_renderDebugFinalSRV : albedoMetallicSRV; break; // Evita que se vea negro
+  case 1: mainSRV = albedoMetallicSRV; break;
+  case 2: mainSRV = normalRoughnessSRV; break;
+  case 3: mainSRV = worldAoSRV; break;
+  default: mainSRV = albedoMetallicSRV; break;
   }
 
-  ImGui::Separator();
+  if (mainSRV) {
+    float w, h;
+    if (GetSRVSize(mainSRV, w, h)) {
+      float aspect = h / w;
+      float drawW = ImGui::GetContentRegionAvail().x;
+      float drawH = drawW * aspect;
+      ImGui::Image((void*)mainSRV, ImVec2(drawW, drawH));
+    }
+  }
+  else {
+    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Textura principal no disponible.");
+  }
 
-  ImGui::Text("Pre Shadow");
-  if (preShadowSRV) {
-    ImGui::Image((ImTextureID)(intptr_t)preShadowSRV, ImVec2(320, 180));
+  ImGui::Spacing();
+  ImGui::Separator();
+  ImGui::Spacing();
+
+  // ---------------------------------------------------------
+  // 2. PREVISUALIZADORES EN 2 COLUMNAS CON TABLAS (ABAJO)
+  // ---------------------------------------------------------
+  ImGui::TextDisabled("Render Targets Internos del G-Buffer:");
+  ImGui::Spacing();
+
+  // Usar la API de Tablas garantiza 2 columnas perfectamente simétricas
+  if (ImGui::BeginTable("GBufferTable", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchSame)) {
+
+    auto DrawPreview = [&](const char* title, ID3D11ShaderResourceView* srv) {
+      ImGui::Text("%s", title);
+      if (srv) {
+        float w, h;
+        if (GetSRVSize(srv, w, h)) {
+          float aspect = h / w;
+          // Toma el ancho disponible dentro de la celda de la tabla
+          float previewW = ImGui::GetContentRegionAvail().x;
+          float previewH = previewW * aspect;
+          ImGui::Image((void*)srv, ImVec2(previewW, previewH));
+        }
+      }
+      else {
+        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "[ Vacio ]");
+      }
+      };
+
+    // --- Fila 1 ---
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    DrawPreview("Albedo / Metallic", albedoMetallicSRV);
+
+    ImGui::TableSetColumnIndex(1);
+    DrawPreview("Normal / Roughness", normalRoughnessSRV);
+
+    // --- Fila 2 ---
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    DrawPreview("World Pos / AO", worldAoSRV);
+
+    ImGui::TableSetColumnIndex(1);
+    DrawPreview("Emissive / Alpha", emissiveAlphaSRV);
+
+    ImGui::EndTable();
   }
 
   ImGui::End();
 }
 
 void
+GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
+  ID3D11ShaderResourceView* normalRoughnessSRV,
+  ID3D11ShaderResourceView* worldAoSRV,
+  ID3D11ShaderResourceView* emissiveAlphaSRV,
+  EU::TSharedPointer<Actor> selectedActor)
+{
+  ImGui::Begin("GBuffer Debug");
+
+  // ---- Modo de visualizacion que se aplica al viewport (deferred debug) ----
+  static const char* kViewModes[] = {
+    "Final", "Albedo", "Normal", "Roughness",
+    "Metallic", "World Pos", "AO", "Emissive"
+  };
+  // Indice del combo -> DebugViewMode del shader (0 = final, 2..8 = canales)
+  static const int kViewModeValues[] = { 0, 2, 3, 4, 5, 6, 7, 8 };
+
+  ImGui::TextDisabled("Visualizacion del viewport");
+  static int currentMode = 0;
+  ImGui::SetNextItemWidth(-1.0f);
+  ImGui::Combo("##DeferredViewMode", &currentMode, kViewModes, IM_ARRAYSIZE(kViewModes));
+  ImGui::Checkbox("Visualizar Shadow Factor", &m_visualizeDeferredShadowFactor);
+
+  // Se publica para que BaseApp lo lea y lo pase al RenderPipeline.
+  m_deferredDebugViewMode = kViewModeValues[currentMode];
+
+  ImGui::Separator();
+
+  // ----------------------------------------------------------------------
+  // --- NUEVO: SECCIÓN DE HERRAMIENTAS DE ESCENA (BOTÓN CREATE LIGHT) ---
+  // ----------------------------------------------------------------------
+  ImGui::Spacing();
+  ImGui::TextDisabled("Herramientas de Escena:");
+
+  // ImVec2(-1, 30) hace que el botón ocupe todo el ancho disponible (-1) y tenga 30px de alto
+  if (ImGui::Button("Create Light Actor", ImVec2(-1, 30)))
+  {
+    m_requestCreateLightActor = true; // Esto le avisa a BaseApp que debe crear la luz
+  }
+  ImGui::Spacing();
+  ImGui::Separator();
+  // ----------------------------------------------------------------------
+
+  // ---- Lista de texturas + preview grande ----
+  struct DebugView {
+    const char* label;
+    ID3D11ShaderResourceView* srv;
+  };
+
+  DebugView views[] = {
+    { "Final Render",        m_renderDebugFinalSRV },
+    { "Pre-Shadow",          m_renderDebugPreShadowSRV },
+    { "Shadow Map",          m_renderDebugShadowMapSRV },
+    { "GB: Albedo+Metallic", albedoMetallicSRV },
+    { "GB: Normal+Rough",    normalRoughnessSRV },
+    { "GB: World+AO",        worldAoSRV },
+    { "GB: Emissive+Alpha",  emissiveAlphaSRV },
+  };
+  const int viewCount = IM_ARRAYSIZE(views);
+
+  static int selectedView = 0;
+  if (selectedView >= viewCount) selectedView = 0;
+
+  if (ImGui::BeginTable("##GBufferLayout", 2,
+    ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp)) {
+    ImGui::TableSetupColumn("Canales", ImGuiTableColumnFlags_WidthFixed, 196.0f);
+    ImGui::TableSetupColumn("Preview", ImGuiTableColumnFlags_WidthStretch);
+
+    // ---------- Columna izquierda: lista de miniaturas ----------
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+
+    if (!selectedActor.isNull()) {
+      ImGui::TextDisabled("Actor: %s", selectedActor->getName().c_str());
+      ImGui::Spacing();
+    }
+
+    for (int i = 0; i < viewCount; ++i) {
+      ImGui::PushID(i);
+
+      bool sel = (selectedView == i);
+      if (ImGui::Selectable(views[i].label, sel, 0, ImVec2(0.0f, 22.0f))) {
+        selectedView = i;
+      }
+
+      // Miniatura: se ve completa (letterbox), sin deformar.
+      if (views[i].srv) {
+        ImageAspectFit(views[i].srv, ImVec2(170.0f, 96.0f));
+      }
+      else {
+        ImGui::Dummy(ImVec2(170.0f, 96.0f));
+        ImGui::TextDisabled("  (sin textura)");
+      }
+
+      ImGui::PopID();
+    }
+
+    // ---------- Columna derecha: preview grande ----------
+    ImGui::TableSetColumnIndex(1);
+    ImGui::Text("%s", views[selectedView].label);
+    ImGui::Spacing();
+
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    if (avail.x < 1.0f) avail.x = 1.0f;
+    if (avail.y < 1.0f) avail.y = 1.0f;
+
+    // Preview: llena TODO el espacio sin deformar (recorta el sobrante).
+    if (views[selectedView].srv && avail.x > 16.0f && avail.y > 16.0f) {
+      ImageAspectFill(views[selectedView].srv, avail);
+    }
+    else {
+      ImGui::Dummy(avail);
+      ImGui::TextDisabled("No hay textura para esta vista");
+    }
+
+    ImGui::EndTable();
+  }
+
+  ImGui::End();
+}
+
+
+void
 GUI::drawEditorDockspace()
 {
   ImGuiViewport* mainViewport = ImGui::GetMainViewport();
 
-  const float topOffset = 96.0f;
+  const float topOffset = 0.0f;
   ImVec2 dockPos = ImVec2(mainViewport->Pos.x, mainViewport->Pos.y + topOffset);
   ImVec2 dockSize = ImVec2(mainViewport->Size.x, mainViewport->Size.y - topOffset);
 
@@ -1182,4 +1574,101 @@ GUI::drawEditorDockspace()
   ImGui::End();
 
   ImGui::PopStyleVar(3);
+}
+
+void GUI::drawLogConsole() {
+  ImGui::Begin("Log Console");
+
+  if (ImGui::Button("Clear Console")) {
+    EditorLog::Clear();
+  }
+
+  ImGui::Separator();
+
+  // Zona de scroll para los textos
+  ImGui::BeginChild("ScrollingRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+  for (const auto& log : EditorLog::s_Logs) {
+    ImVec4 color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // Blanco por defecto (Info)
+
+    if (log.type == 1) color = ImVec4(1.0f, 0.8f, 0.0f, 1.0f); // Amarillo (Warning)
+    if (log.type == 2) color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); // Rojo (Error)
+
+    ImGui::TextColored(color, "%s", log.text.c_str());
+  }
+
+  // Auto-scroll automático hacia abajo cuando entran nuevos logs
+  if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+    ImGui::SetScrollHereY(1.0f);
+  }
+
+  ImGui::EndChild();
+  ImGui::End();
+}
+
+void GUI::drawStatsPanel()
+{
+  // Creamos la pestaña dedicada
+  ImGui::Begin("Engine Statistics");
+
+  // 1. OBTENCIÓN DE DATOS DE RENDIMIENTO
+  float fps = ImGui::GetIO().Framerate;
+  float ms = 1000.0f / (fps > 0.0f ? fps : 60.0f); // Evitamos división por cero
+
+  // 2. LÓGICA DEL BÚFER CIRCULAR PARA EL GRÁFICO (Historial de 120 frames)
+  const int kBufferSize = 120;
+  static float fpsHistory[kBufferSize] = { 0.0f };
+  static int currentOffset = 0;
+
+  // Guardamos el frame actual en el historial
+  fpsHistory[currentOffset] = fps;
+  currentOffset = (currentOffset + 1) % kBufferSize;
+
+  // 3. SECCIÓN DE TEXTOS NUMÉRICOS
+  ImGui::TextDisabled("Metricas de Rendimiento General:");
+  ImGui::Spacing();
+
+  // Mostramos los FPS en verde brillante
+  ImGui::Text("Frames Per Second (FPS): ");
+  ImGui::SameLine();
+  ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.4f, 1.0f), "%.1f FPS", fps);
+
+  // Mostramos el tiempo de ciclo de CPU/GPU
+  ImGui::Text("Frame Time (Tiempo de Frame): ");
+  ImGui::SameLine();
+  ImGui::TextColored(ImVec4(0.2f, 0.7f, 1.0f, 1.0f), "%.2f ms", ms);
+
+  ImGui::Separator();
+  ImGui::Spacing();
+
+  // 4. CONSTRUCCIÓN DEL GRÁFICO FUNCIONAL
+  ImGui::TextDisabled("Grafico de Estabilidad de FPS (Historial):");
+  ImGui::Spacing();
+
+  // Calculamos el FPS máximo y mínimo del historial para escalar el gráfico correctamente
+  float maxFps = 0.0f;
+  float minFps = 60.0f;
+  for (int i = 0; i < kBufferSize; ++i) {
+    if (fpsHistory[i] > maxFps) maxFps = fpsHistory[i];
+    if (fpsHistory[i] < minFps && fpsHistory[i] > 0.0f) minFps = fpsHistory[i];
+  }
+
+  // Si los límites son iguales, les damos un margen visual predeterminado
+  if (maxFps == minFps) { maxFps += 10.0f; minFps -= 10.0f; }
+
+  // Formateamos un texto flotante para mostrar el FPS actual dentro del gráfico
+  char overlayText[32];
+  sprintf_s(overlayText, "Actual: %.1f FPS", fps);
+
+  float scaleMin = minFps - 1.5f;
+  float scaleMax = maxFps + 1.5f;
+
+  // Dibujamos el gráfico de líneas dinámico
+  // Parámetros: Etiqueta, puntero al arreglo, tamaño, desfase del búfer, texto superpuesto, escala mínima, escala máxima, tamaño del gráfico (ancho automático, alto 80px)
+  ImGui::PlotLines("##FPSGraph", fpsHistory, kBufferSize, currentOffset, overlayText, scaleMin, scaleMax, ImVec2(-1, 150));
+
+  ImGui::Spacing();
+  ImGui::TextDisabled("Limites del Historial -> Min: %.1f FPS | Max: %.1f FPS", minFps, maxFps);
+
+  ImGui::End();
 }

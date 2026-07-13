@@ -520,6 +520,7 @@
     <ClInclude Include="include\Rendering\Material.h" />
     <ClInclude Include="include\Rendering\MaterialInstance.h" />
     <ClInclude Include="include\Rendering\Mesh.h" />
+    <ClInclude Include="include\Rendering\RenderPipeline.h" />
     <ClInclude Include="include\Rendering\RenderScene.h" />
     <ClInclude Include="include\Rendering\RenderTypes.h" />
     <ClInclude Include="include\RenderTargetView.h" />
@@ -553,6 +554,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\ShadowMap.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\DeferredGBuffer.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="bin\DeferredLighting.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

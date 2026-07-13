@@ -49,12 +49,14 @@
   * @param method Nombre del método donde ocurre el evento.
   * @param state Estado del recurso (ejemplo: "OK", "FAILED").
   */
+
+/*
 #define MESSAGE( classObj, method, state )   \
 {                                            \
    std::wostringstream os_;                  \
    os_ << classObj << "::" << method << " : " << "[CREATION OF RESOURCE " << ": " << state << "] \n"; \
    OutputDebugStringW( os_.str().c_str() );  \
-}
+}*/
 
   /**
    * @brief Macro para registrar mensajes de error en la ventana de depuración.
@@ -66,6 +68,8 @@
    * @param method Nombre del método donde ocurre el error.
    * @param errorMSG Mensaje descriptivo del error.
    */
+
+   /*
 #define ERROR(classObj, method, errorMSG)                     \
 {                                                             \
     try {                                                     \
@@ -73,6 +77,51 @@
         os_ << L"ERROR : " << classObj << L"::" << method     \
             << L" : " << errorMSG << L"\n";                   \
         OutputDebugStringW(os_.str().c_str());                \
+    } catch (...) {                                           \
+        OutputDebugStringW(L"Failed to log error message.\n");\
+    }                                                         \
+}*/
+
+
+
+// SISTEMA DE LOGS PARA EL EDITOR ---
+struct LogEntry {
+  std::string text;
+  int type; // 0 = Info/Message, 1 = Warning, 2 = Error
+};
+
+class EditorLog {
+public:
+  inline static std::vector<LogEntry> s_Logs;
+
+  static void AddLog(const std::wstring& wtext, int type) {
+    // Enviar a Visual Studio como antes
+    OutputDebugStringW(wtext.c_str());
+
+    // Convertir Wide String (wstring) a String normal (UTF-8) para ImGui
+    std::string text(wtext.begin(), wtext.end());
+    s_Logs.push_back({ text, type });
+  }
+
+  static void Clear() {
+    s_Logs.clear();
+  }
+};
+
+#define MESSAGE( classObj, method, state )   \
+{                                            \
+   std::wostringstream os_;                  \
+   os_ << classObj << "::" << method << " : [CREATION OF RESOURCE : " << state << "] \n"; \
+   EditorLog::AddLog(os_.str(), 0);          \
+}
+
+#define ERROR(classObj, method, errorMSG)                     \
+{                                                             \
+    try {                                                     \
+        std::wostringstream os_;                              \
+        os_ << L"ERROR : " << classObj << L"::" << method     \
+            << L" : " << errorMSG << L"\n";                   \
+        EditorLog::AddLog(os_.str(), 2);                      \
     } catch (...) {                                           \
         OutputDebugStringW(L"Failed to log error message.\n");\
     }                                                         \

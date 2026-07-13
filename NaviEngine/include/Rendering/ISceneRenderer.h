@@ -18,7 +18,7 @@ class EditorViewportPass;
  * @brief Tipos de renderizado soportados por el motor.
  */
 enum class
-  RenderType {
+  RendererType {
   /**
    * @brief Renderizado Forward tradicional.
    */

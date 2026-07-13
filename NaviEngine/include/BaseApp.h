@@ -30,7 +30,7 @@
 #include "Rendering/Material.h"
 #include "Rendering/MaterialInstance.h"
 #include "Rendering/Mesh.h"
-#include "Rendering/ForwardRenderer.h"
+#include "Rendering/RenderPipeline.h"
 #include "Rendering/RenderScene.h"
 
 #include <string>
@@ -58,6 +58,10 @@ public:
   std::string getDefaultScenePath() const;
 
 private:
+  EU::TSharedPointer<Actor> createLightActor(const std::string& name = std::string());
+
+  EU::TSharedPointer<Actor> cloneActor(EU::TSharedPointer<Actor> original);
+
   static LRESULT CALLBACK
     WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -89,6 +93,8 @@ private:
   // Recursos generales
   Texture             m_skyboxTex;
 
+  Texture             m_lightIconTexture;
+
   Camera              m_camera;
   SceneGraph          m_sceneGraph;
 
@@ -96,6 +102,8 @@ private:
   std::vector<EU::TSharedPointer<Actor>> m_actors;
   EU::TSharedPointer<Actor> m_cyberGun;
   EU::TSharedPointer<Actor> m_directionalLightActor;
+
+  EU::TSharedPointer<Actor> m_clipboardActor;
 
   // Recursos de modelo
   Model3D* m_model = nullptr;
@@ -120,7 +128,7 @@ private:
   MaterialInstance m_headMaterial;
 
   EditorViewportPass  m_editorViewportPass;
-  ForwardRenderer     m_forwardRenderer;
+  RenderPipeline      m_renderPipeline;
   RenderScene         m_renderScene;
 
   // Resize diferido del viewport editor

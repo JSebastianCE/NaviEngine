@@ -248,6 +248,9 @@
     <ClInclude Include="include\Rendering\DeferredRenderer.h">
       <Filter>include\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="include\Rendering\RenderPipeline.h">
+      <Filter>include\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -378,6 +381,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="bin\ShadowMap.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\DeferredGBuffer.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\DeferredLighting.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

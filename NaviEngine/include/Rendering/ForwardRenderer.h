@@ -4,6 +4,7 @@
 #include "DepthStencilState.h"
 #include "DepthStencilView.h"
 #include "RasterizerState.h"
+#include "Rendering/ISceneRenderer.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/RenderTypes.h"
 #include "ShaderProgram.h"
@@ -26,14 +27,14 @@ class Material;
  * - Manejar buffers y estados gráficos necesarios
  */
 class
-ForwardRenderer {
+  ForwardRenderer : public ISceneRenderer {
 public:
   /**
    * @brief Inicializa el renderer y sus recursos.
    * @param device Referencia al dispositivo gráfico.
    * @return HRESULT indicando éxito o fallo.
    */
-  HRESULT init(Device& device);
+  HRESULT init(Device& device) override;
 
   /**
    * @brief Ajusta el tamaño del render target.
@@ -41,10 +42,10 @@ public:
    * @param width Nuevo ancho.
    * @param height Nuevo alto.
    */
-  void 
-  resize(Device& device,
-    unsigned int width,
-    unsigned int height);
+  void
+    resize(Device& device,
+      unsigned int width,
+      unsigned int height) override;
 
   /**
    * @brief Actualiza los datos por frame (buffers constantes).
@@ -52,10 +53,10 @@ public:
    * @param scene Escena a renderizar.
    * @param deviceContext Contexto del dispositivo.
    */
-  void 
-  updatePerFrame(const Camera& camera,
-    const RenderScene& scene,
-    DeviceContext& deviceContext);
+  void
+    updatePerFrame(const Camera& camera,
+      const RenderScene& scene,
+      DeviceContext& deviceContext);
 
   /**
    * @brief Ejecuta el pipeline completo de render.
@@ -64,29 +65,34 @@ public:
    * @param scene Escena a renderizar.
    * @param viewportPass Pass de viewport del editor.
    */
-  void 
-  render(DeviceContext& deviceContext,
-    const Camera& camera,
-    RenderScene& scene,
-    EditorViewportPass& viewportPass);
+  void
+    render(DeviceContext& deviceContext,
+      const Camera& camera,
+      RenderScene& scene,
+      EditorViewportPass& viewportPass) override;
 
   /**
    * @brief Libera todos los recursos del renderer.
    */
-  void 
-  destroy();
+  void
+    destroy() override;
 
   /**
    * @brief Obtiene el Shader Resource View del shadow map.
    * @return Puntero a ID3D11ShaderResourceView.
    */
-  ID3D11ShaderResourceView* getShadowMapSRV() const { return m_shadowDepthSRV.m_textureFromImg; }
+  ID3D11ShaderResourceView* getShadowMapSRV() const override { return m_shadowDepthSRV.m_textureFromImg; }
 
   /**
    * @brief Obtiene el SRV del pre-shadow debug pass.
    * @return Puntero a ID3D11ShaderResourceView.
    */
-  ID3D11ShaderResourceView* getPreShadowSRV() const { return m_preShadowDebugPass.getSRV(); }
+  ID3D11ShaderResourceView* getPreShadowSRV() const override { return m_preShadowDebugPass.getSRV(); }
+
+  /**
+   * @brief Nombre descriptivo del renderer (debug / editor).
+   */
+  const char* getDebugName() const override { return "ForwardRenderer"; }
 
 private:
   /**
@@ -95,7 +101,7 @@ private:
    * @param camera Cámara activa.
    */
   void
-  buildQueues(RenderScene& scene, const Camera& camera);
+    buildQueues(RenderScene& scene, const Camera& camera);
 
   /**
    * @brief Renderiza el pass de debug previo a sombras.
@@ -103,27 +109,27 @@ private:
    * @param scene Escena.
    */
   void
-  renderPreShadowDebugPass(DeviceContext& deviceContext, RenderScene& scene);
+    renderPreShadowDebugPass(DeviceContext& deviceContext, RenderScene& scene);
 
   /** @brief Renderiza el pass de sombras. */
   void
-  renderShadowPass(DeviceContext& deviceContext);
+    renderShadowPass(DeviceContext& deviceContext);
 
   /** @brief Renderiza objetos opacos. */
   void
-  renderOpaquePass(DeviceContext& deviceContext);
+    renderOpaquePass(DeviceContext& deviceContext);
 
   /** @brief Renderiza objetos transparentes. */
-  void 
-  renderTransparentPass(DeviceContext& deviceContext);
+  void
+    renderTransparentPass(DeviceContext& deviceContext);
 
   /**
    * @brief Renderiza el skybox.
    * @param deviceContext Contexto del dispositivo.
    * @param scene Escena.
    */
-  void 
-  renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
+  void
+    renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
 
   /**
    * @brief Renderiza un objeto según el tipo de pass.
@@ -131,16 +137,16 @@ private:
    * @param object Objeto a renderizar.
    * @param passType Tipo de pass.
    */
-  void 
-  renderObject(DeviceContext& deviceContext, const RenderObject& object, RenderPassType passType);
+  void
+    renderObject(DeviceContext& deviceContext, const RenderObject& object, RenderPassType passType);
 
   /**
    * @brief Renderiza un objeto en el pass de sombras.
    * @param deviceContext Contexto del dispositivo.
    * @param object Objeto a renderizar.
    */
-  void 
-  renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
+  void
+    renderShadowObject(DeviceContext& deviceContext, const RenderObject& object);
 
   /**
    * @brief Crea los recursos necesarios para sombras.
@@ -154,8 +160,8 @@ private:
    * @param camera Cámara activa.
    * @param scene Escena.
    */
-  void 
-  updateLightMatrices(const Camera& camera, const RenderScene& scene);
+  void
+    updateLightMatrices(const Camera& camera, const RenderScene& scene);
 
   /**
    * @brief Crea estados de blending.
@@ -184,6 +190,9 @@ private:
   /** @brief Estado de profundidad para transparencia. */
   DepthStencilState m_transparentDepthStencil;
 
+  /** @brief Estado de profundidad dedicado para el shadow pass. */
+  DepthStencilState m_shadowDepthStencil;
+
   /** @brief Estados de blending. */
   ID3D11BlendState* m_alphaBlendState = nullptr;
   ID3D11BlendState* m_opaqueBlendState = nullptr;
@@ -191,8 +200,8 @@ private:
   ID3D11BlendState* m_premultipliedBlendState = nullptr;
 
   /** @brief Factor de mezcla. */
-  float 
-  m_blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+  float
+    m_blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
   /** @brief Textura de profundidad para sombras. */
   Texture m_shadowDepthTexture;
@@ -210,15 +219,15 @@ private:
   RasterizerState m_shadowRasterizer;
 
   /** @brief Tamaño del shadow map. */
-  unsigned 
-  int m_shadowMapSize = 2048;
+  unsigned
+    int m_shadowMapSize = 2048;
 
   /** @brief Pass de debug previo a sombras. */
   EditorViewportPass m_preShadowDebugPass;
 
   /** @brief Indica si se aplican sombras. */
-  bool 
-  m_applyShadows = true;
+  bool
+    m_applyShadows = true;
 
   /** @brief Constant buffers CPU-side. */
   CBPerFrame m_cbPerFrame{};

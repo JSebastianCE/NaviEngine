@@ -12,7 +12,6 @@
 #include "EngineUtilities/Utilities/LayoutBuilder.h"
 #include "EngineUtilities/Utilities/Skybox.h"
 
-
 // Inicializa todos los recursos necesarios del renderer (buffers, sombras, estados, etc.)
 HRESULT
 ForwardRenderer::init(Device& device) {
@@ -39,6 +38,15 @@ ForwardRenderer::init(Device& device) {
     return hr;
   }
 
+  // Estado de profundidad dedicado al shadow pass (escribe profundidad completa).
+  hr = m_shadowDepthStencil.init(device,
+    true,
+    D3D11_DEPTH_WRITE_MASK_ALL,
+    D3D11_COMPARISON_LESS);
+  if (FAILED(hr)) {
+    return hr;
+  }
+
   hr = createShadowResources(device);
   if (FAILED(hr)) {
     return hr;
@@ -56,13 +64,11 @@ ForwardRenderer::init(Device& device) {
   return S_OK;
 }
 
-
 // Ajusta el tamaño del viewport interno (principalmente usado para debug pre-shadow)
 void
 ForwardRenderer::resize(Device& device, unsigned int width, unsigned int height) {
   m_preShadowDebugPass.resize(device, width, height);
 }
-
 
 // Actualiza el constant buffer por frame con datos de cámara y luz
 void
@@ -84,7 +90,6 @@ ForwardRenderer::updatePerFrame(const Camera& camera,
 
   m_perFrameBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerFrame, 0, 0);
 }
-
 
 // Ejecuta todo el pipeline de render: colas, sombras, passes principales
 void
@@ -116,6 +121,7 @@ ForwardRenderer::destroy() {
   SAFE_RELEASE(m_additiveBlendState);
   SAFE_RELEASE(m_premultipliedBlendState);
   m_transparentDepthStencil.destroy();
+  m_shadowDepthStencil.destroy();
   m_perMaterialBuffer.destroy();
   m_perObjectBuffer.destroy();
   m_perFrameBuffer.destroy();
@@ -148,7 +154,6 @@ ForwardRenderer::renderOpaquePass(DeviceContext& deviceContext) {
   }
 }
 
-
 // Renderiza objetos transparentes con blending adecuado y ordenados por distancia
 void
 ForwardRenderer::renderTransparentPass(DeviceContext& deviceContext) {
@@ -161,7 +166,6 @@ ForwardRenderer::renderTransparentPass(DeviceContext& deviceContext) {
     deviceContext.PSSetShaderResources(6, 1, nullShadowSRV);
   }
 
-
   for (const RenderObject* object : m_transparentQueue) {
     if (!object) {
       continue;
@@ -172,7 +176,6 @@ ForwardRenderer::renderTransparentPass(DeviceContext& deviceContext) {
   }
   deviceContext.OMSetBlendState(m_opaqueBlendState, m_blendFactor, 0xffffffff);
 }
-
 
 // Genera el shadow map renderizando la escena desde la perspectiva de la luz
 void
@@ -195,6 +198,7 @@ ForwardRenderer::renderShadowPass(DeviceContext& deviceContext) {
   deviceContext.RSSetViewports(1, &shadowViewport);
 
   m_shadowRasterizer.render(deviceContext);
+  m_shadowDepthStencil.render(deviceContext, 0, false);
   m_perFrameBuffer.render(deviceContext, 0, 1, false);
 
   for (const RenderObject* object : m_opaqueQueue) {
@@ -226,7 +230,6 @@ ForwardRenderer::renderPreShadowDebugPass(DeviceContext& deviceContext, RenderSc
   m_applyShadows = true;
 }
 
-
 // Construye y ordena las colas de render (opacos y transparentes)
 void
 ForwardRenderer::buildQueues(RenderScene& scene, const Camera& camera) {
@@ -250,14 +253,11 @@ ForwardRenderer::buildQueues(RenderScene& scene, const Camera& camera) {
       return lhs->distanceToCamera < rhs->distanceToCamera;
     });
 
-
-
   std::sort(m_transparentQueue.begin(), m_transparentQueue.end(),
     [](const RenderObject* lhs, const RenderObject* rhs) {
       return lhs->distanceToCamera > rhs->distanceToCamera;
     });
 }
-
 
 // Renderiza el skybox si existe en la escena
 void
@@ -275,10 +275,6 @@ ForwardRenderer::renderObject(DeviceContext& deviceContext,
   if (!object.mesh || (!object.materialInstance && object.materialInstances.empty())) {
     return;
   }
-
-  XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(object.world));
-  m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
-  m_perObjectBuffer.render(deviceContext, 1, 1, true);
 
   deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -299,11 +295,22 @@ ForwardRenderer::renderObject(DeviceContext& deviceContext,
       continue;
     }
 
+    // Filtrado por dominio: cada pass dibuja solo lo que le corresponde.
+    if (passType == RenderPassType::Opaque &&
+      material->getDomain() == MaterialDomain::Transparent) {
+      continue;
+    }
+    if (passType == RenderPassType::Transparent &&
+      material->getDomain() != MaterialDomain::Transparent) {
+      continue;
+    }
+
     if (material->getRasterizerState()) {
       material->getRasterizerState()->render(deviceContext);
     }
 
     if (passType == RenderPassType::Transparent) {
+      deviceContext.OMSetBlendState(resolveBlendState(material), m_blendFactor, 0xffffffff);
       m_transparentDepthStencil.render(deviceContext, 0, false);
     }
     else if (material->getDepthStencilState()) {
@@ -317,6 +324,12 @@ ForwardRenderer::renderObject(DeviceContext& deviceContext,
     if (material->getSamplerState()) {
       material->getSamplerState()->render(deviceContext, 0, 1);
     }
+
+    // World del submesh = transform local del submesh * world del actor.
+    XMMATRIX submeshWorld = XMLoadFloat4x4(&submesh.localTransform) * object.world;
+    XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(submeshWorld));
+    m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
+    m_perObjectBuffer.render(deviceContext, 1, 1, true);
 
     materialInstance->bindTextures(deviceContext);
 
@@ -346,16 +359,28 @@ ForwardRenderer::renderShadowObject(DeviceContext& deviceContext, const RenderOb
     return;
   }
 
-  XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(object.world));
-  m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
-  m_perObjectBuffer.render(deviceContext, 1, 1, false);
-
   m_shadowShader.render(deviceContext);
   deviceContext.m_deviceContext->PSSetShader(nullptr, nullptr, 0);
   deviceContext.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
   std::vector<Submesh>& submeshes = object.mesh->getSubmeshes();
   for (Submesh& submesh : submeshes) {
+    MaterialInstance* materialInstance = object.materialInstance;
+    if (submesh.materialSlot < object.materialInstances.size() &&
+      object.materialInstances[submesh.materialSlot]) {
+      materialInstance = object.materialInstances[submesh.materialSlot];
+    }
+
+    Material* material = materialInstance ? materialInstance->getMaterial() : nullptr;
+    if (material && material->getDomain() == MaterialDomain::Transparent) {
+      continue;
+    }
+
+    XMMATRIX submeshWorld = XMLoadFloat4x4(&submesh.localTransform) * object.world;
+    XMStoreFloat4x4(&m_cbPerObject.World, XMMatrixTranspose(submeshWorld));
+    m_perObjectBuffer.update(deviceContext, nullptr, 0, nullptr, &m_cbPerObject, 0, 0);
+    m_perObjectBuffer.render(deviceContext, 1, 1, false);
+
     submesh.vertexBuffer.render(deviceContext, 0, 1);
     submesh.indexBuffer.render(deviceContext, 0, 1, false, DXGI_FORMAT_R32_UINT);
     deviceContext.DrawIndexed(submesh.indexCount, submesh.startIndex, 0);
@@ -384,7 +409,6 @@ ForwardRenderer::updateLightMatrices(const Camera& camera, const RenderScene& sc
   XMStoreFloat4x4(&m_cbPerFrame.LightViewProjection, XMMatrixTranspose(lightView * lightProjection));
 }
 
-
 // Crea todos los recursos necesarios para el sistema de sombras (texturas, shaders, rasterizer)
 HRESULT
 ForwardRenderer::createShadowResources(Device& device) {
@@ -411,12 +435,10 @@ ForwardRenderer::createShadowResources(Device& device) {
 
   LayoutBuilder builder;
   builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
-
-
+    .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+    .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+    .Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+    .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 
   hr = m_shadowShader.init(device, "ShadowMap.hlsl", builder);
   if (FAILED(hr)) {
@@ -429,7 +451,6 @@ ForwardRenderer::createShadowResources(Device& device) {
   }
   return S_OK;
 }
-
 
 // Crea los distintos estados de blending utilizados en el renderer
 HRESULT
@@ -478,7 +499,6 @@ ForwardRenderer::createBlendStates(Device& device) {
   renderTarget.DestBlendAlpha = D3D11_BLEND_ONE;
   renderTarget.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 
-
   hr = device.m_device->CreateBlendState(&blendDesc, &m_additiveBlendState);
   if (FAILED(hr)) {
     return hr;
@@ -494,7 +514,6 @@ ForwardRenderer::createBlendStates(Device& device) {
 
   return device.m_device->CreateBlendState(&blendDesc, &m_premultipliedBlendState);
 }
-
 
 // Determina qué estado de blending usar según el material
 ID3D11BlendState*

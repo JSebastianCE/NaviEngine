@@ -1,75 +1,52 @@
+/**
+ * @file Mesh.h
+ * @brief Declara la API de Mesh dentro del subsistema Rendering.
+ * @ingroup rendering
+ */
 #pragma once
 #include "Prerequisites.h"
 #include "Buffer.h"
 
-/**
- * @struct Submesh
- * @brief Representa una porción de una malla con su propio conjunto de buffers y material.
- *
- * Un Submesh permite dividir una malla en partes que pueden:
- * - Usar diferentes materiales
- * - Ser renderizadas de manera independiente
- * - Compartir la misma geometría base
- */
+ /**
+	* @struct Submesh
+	* @brief Describe una porcion renderizable de una malla con sus buffers asociados.
+	*/
 struct
-Submesh {
-  /** @brief Buffer de vértices. */
-  Buffer vertexBuffer;
-
-  /** @brief Buffer de índices. */
-  Buffer indexBuffer;
-
-  /** @brief Número total de índices. */
-  unsigned 
-  int indexCount = 0;
-
-  /** @brief Índice inicial dentro del index buffer. */
-  unsigned 
-  int startIndex = 0;
-
-  /** @brief Slot de material asociado. */
-  unsigned
-  int materialSlot = 0;
+	Submesh {
+	Buffer vertexBuffer;          ///< Buffer de vertices de la submalla.
+	Buffer indexBuffer;           ///< Buffer de indices de la submalla.
+	unsigned int indexCount = 0;  ///< Numero de indices a dibujar.
+	unsigned int startIndex = 0;  ///< Offset inicial dentro del index buffer.
+	unsigned int materialSlot = 0;///< Slot de material esperado por el renderer.
+	XMFLOAT4X4 localTransform = XMFLOAT4X4(
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f); ///< Transform local de la submalla dentro del modelo.
 };
 
 /**
  * @class Mesh
- * @brief Representa una malla compuesta por múltiples submeshes.
- *
- * Permite gestionar geometría compleja dividiéndola en submeshes,
- * cada uno con su propio material y buffers.
+ * @brief Agrupa una coleccion de submallas listas para ser renderizadas.
  */
 class
-Mesh {
+	Mesh {
 public:
-  /**
-   * @brief Obtiene la lista de submeshes (mutable).
-   * @return Referencia al vector de Submesh.
-   */
-  std::vector<Submesh>& getSubmeshes() { return m_submeshes; }
+	std::vector<Submesh>& getSubmeshes() { return m_submeshes; }
+	const std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
 
-  /**
-   * @brief Obtiene la lista de submeshes (const).
-   * @return Referencia constante al vector de Submesh.
-   */
-  const 
-  std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
-
-  /**
-   * @brief Libera los recursos de todos los submeshes.
-   *
-   * Destruye los buffers de vértices e índices y limpia la lista.
-   */
-  void
-    destroy() {
-    for (Submesh& submesh : m_submeshes) {
-      submesh.vertexBuffer.destroy();
-      submesh.indexBuffer.destroy();
-    }
-    m_submeshes.clear();
-  }
+	/**
+	 * @brief Libera todos los buffers asociados a las submallas.
+	 */
+	void
+		destroy() {
+		for (Submesh& submesh : m_submeshes) {
+			submesh.vertexBuffer.destroy();
+			submesh.indexBuffer.destroy();
+		}
+		m_submeshes.clear();
+	}
 
 private:
-  /** @brief Lista de submeshes que componen la malla. */
-  std::vector<Submesh> m_submeshes;
+	std::vector<Submesh> m_submeshes;
 };

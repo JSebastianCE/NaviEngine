@@ -57,6 +57,28 @@ BaseApp::run(HINSTANCE hInst, int nCmdShow) {
       LARGE_INTEGER curr;
       QueryPerformanceCounter(&curr);
       float deltaTime = static_cast<float>(curr.QuadPart - prev.QuadPart) / freq.QuadPart;
+
+      // =================================================================
+      // --- NUEVO: LIMITADOR DE TIEMPO (120 FPS MAX) ---
+      // =================================================================
+      const float targetFPS = 120.0f;
+      const float targetFrameTime = 1.0f / targetFPS; // Tiempo requerido por frame (~0.0083s)
+
+      if (deltaTime < targetFrameTime)
+      {
+        // Calculamos cuántos milisegundos nos sobran
+        float sleepTimeMs = (targetFrameTime - deltaTime) * 1000.0f;
+
+        // Si nos sobra más de 1 milisegundo, dormimos el hilo para ahorrar recursos
+        if (sleepTimeMs > 1.0f) {
+          Sleep(static_cast<DWORD>(sleepTimeMs - 1.0f));
+        }
+        // Usamos 'continue' para volver al inicio del while SIN hacer update ni render aún
+        continue;
+      }
+      // =================================================================
+
+      // Solo actualizamos "prev" cuando el tiempo haya superado el targetFrameTime (120 FPS)
       prev = curr;
 
       update(deltaTime);
@@ -133,6 +155,13 @@ BaseApp::init() {
     "Skybox/cubemap_5.png"
   };
   m_skyboxTex.CreateCubemap(m_device, m_deviceContext, faces, false);
+
+  // Icono 2D para marcar las luces en el viewport (NO afecta la escena 3D).
+  HRESULT lightIconHr = m_lightIconTexture.init(m_device, "Assets/Icons/light_icon", ExtensionType::PNG);
+  if (FAILED(lightIconHr)) {
+    MESSAGE("Main", "InitDevice", "No se encontro el icono de luz. Se usara un marcador por defecto.");
+  }
+
 
   // --------------------------------------------------------------------------
   // ACTOR PRINCIPAL: TU HACHA
@@ -211,10 +240,10 @@ BaseApp::init() {
   // --------------------------------------------------------------------------
   LayoutBuilder builder;
   builder.Add("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
-          .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
+    .Add("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+    .Add("TANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+    .Add("BITANGENT", DXGI_FORMAT_R32G32B32_FLOAT)
+    .Add("TEXCOORD", DXGI_FORMAT_R32G32_FLOAT);
 
   hr = m_shaderProgram.init(m_device, "PBRShader.hlsl", builder);
   if (FAILED(hr)) {
@@ -322,6 +351,7 @@ BaseApp::init() {
     }
 
     submesh.indexCount = meshComponent.m_numIndex;
+    submesh.localTransform = meshComponent.m_localTransform;
     submesh.materialSlot = 0;
 
     m_cyberGunRenderMesh.getSubmeshes().push_back(std::move(submesh));
@@ -370,7 +400,7 @@ BaseApp::init() {
   loadScene(getDefaultScenePath());
 
   // --------------------------------------------------------------------------
-  // VIEWPORT PASS / FORWARD RENDERER
+  // VIEWPORT PASS / RENDER PIPELINE (DEFERRED)
   // --------------------------------------------------------------------------
   hr = m_editorViewportPass.init(m_device, 1280, 720);
   if (FAILED(hr)) {
@@ -379,10 +409,10 @@ BaseApp::init() {
     return hr;
   }
 
-  hr = m_forwardRenderer.init(m_device);
+  hr = m_renderPipeline.init(m_device, RendererType::Deferred);
   if (FAILED(hr)) {
     ERROR("Main", "InitDevice",
-      ("Failed to initialize ForwardRenderer. HRESULT: " + std::to_string(hr)).c_str());
+      ("Failed to initialize RenderPipeline. HRESULT: " + std::to_string(hr)).c_str());
     return hr;
   }
 
@@ -391,6 +421,11 @@ BaseApp::init() {
 
 void
 BaseApp::update(float deltaTime) {
+
+  // Aplica el resize diferido del viewport ANTES de construir la UI,
+  // para que ImGui capture los SRVs nuevos (evita punteros colgantes al redimensionar).
+  handleEditorViewportResize();
+
   static float t = 0.0f;
   if (m_swapChain.m_driverType == D3D_DRIVER_TYPE_REFERENCE)
   {
@@ -406,11 +441,21 @@ BaseApp::update(float deltaTime) {
   }
 
   m_gui.update(m_viewport, m_window);
+
+  // Crear luz desde el boton del ribbon
+  if (m_gui.consumeCreateLightActorRequest()) {
+    EU::TSharedPointer<Actor> lightActor = createLightActor();
+    if (!lightActor.isNull()) {
+      m_gui.selectedActorIndex = static_cast<int>(m_actors.size()) - 1;
+    }
+  }
+
   m_gui.drawViewportPanel(m_editorViewportPass.getSRV());
+  m_gui.drawViewportLightIcons(m_actors, m_camera, m_lightIconTexture.m_textureFromImg);
   m_gui.drawRenderDebugPanel(
-    m_forwardRenderer.getPreShadowSRV(),
+    m_renderPipeline.getPreShadowSRV(),
     m_editorViewportPass.getSRV(),
-    m_forwardRenderer.getShadowMapSRV()
+    m_renderPipeline.getShadowMapSRV()
   );
 
   m_gui.outliner(m_actors);
@@ -422,6 +467,21 @@ BaseApp::update(float deltaTime) {
   }
 
   m_gui.inspectorGeneral(selectedActor);
+
+  m_gui.drawStatsPanel();
+
+  // Panel del G-Buffer (deferred) + conexion de modos de debug al pipeline
+  m_gui.drawGBufferDebugPanel(
+    m_renderPipeline.getGBufferAlbedoMetallicSRV(),
+    m_renderPipeline.getGBufferNormalRoughnessSRV(),
+    m_renderPipeline.getGBufferWorldAoSRV(),
+    m_renderPipeline.getGBufferEmissiveAlphaSRV(),
+    selectedActor
+  );
+
+  m_renderPipeline.setShadowFactorDebugEnabled(m_gui.m_visualizeDeferredShadowFactor);
+  m_renderPipeline.setDeferredDebugViewMode(m_gui.m_deferredDebugViewMode);
+
   m_gui.editTransform(m_camera, m_window, selectedActor);
 
   if (m_gui.consumeSaveSceneRequest()) {
@@ -458,6 +518,124 @@ BaseApp::update(float deltaTime) {
     }
   }
 
+  // Aspect ratio de la camara = aspecto del render target del viewport del editor.
+// Evita que el modelo se deforme cuando el panel cambia de forma.
+  const unsigned int vpW = m_editorViewportPass.getWidth();
+  const unsigned int vpH = m_editorViewportPass.getHeight();
+  if (vpW > 0 && vpH > 0) {
+    m_camera.setLens(XM_PIDIV4, static_cast<float>(vpW) / static_cast<float>(vpH), 0.01f, 100.0f);
+  }
+
+  // ----------------------------------------------------------------------
+  // NAVEGACIÓN DE CÁMARA DCC (ESTILO MAYA / BLENDER) --------
+  // ----------------------------------------------------------------------
+  ImGuiIO& io = ImGui::GetIO();
+
+
+
+    // SHORTCUTS DEL EDITOR (COPIAR, PEGAR, DUPLICAR) ------------
+  bool isCtrlDown = io.KeyCtrl; // Detecta si Control está presionado
+
+  // Asegurarnos de que no estamos escribiendo texto en un input de ImGui
+  if (!io.WantTextInput) {
+
+    // COPIAR (Ctrl + C)
+    if (isCtrlDown && ImGui::IsKeyPressed(ImGuiKey_C)) {
+      if (selectedActor) {
+        m_clipboardActor = selectedActor;
+        MESSAGE("Editor", "Shortcuts", "Actor copiado al portapapeles.");
+      }
+    }
+
+    // PEGAR (Ctrl + V)
+    if (isCtrlDown && ImGui::IsKeyPressed(ImGuiKey_V)) {
+      if (!m_clipboardActor.isNull()) {
+        auto newActor = cloneActor(m_clipboardActor);
+
+        // Opcional: Desfasar un poco la posición para que no aparezca exactamente dentro del original
+        auto trans = newActor->getComponent<Transform>();
+        EU::Vector3 pos = trans->getPosition();
+        trans->setPosition(EU::Vector3(pos.x + 1.0f, pos.y, pos.z + 1.0f));
+        trans->rebuildMatrixFromVectors();
+
+        // Seleccionar automáticamente el nuevo actor pegado
+        m_gui.selectedActorIndex = static_cast<int>(m_actors.size()) - 1;
+        MESSAGE("Editor", "Shortcuts", "Actor pegado en la escena.");
+      }
+    }
+
+    // DUPLICAR (Ctrl + D) = Copiar + Pegar al instante
+    if (isCtrlDown && ImGui::IsKeyPressed(ImGuiKey_D)) {
+      if (selectedActor) {
+        auto newActor = cloneActor(selectedActor);
+        m_gui.selectedActorIndex = static_cast<int>(m_actors.size()) - 1;
+        MESSAGE("Editor", "Shortcuts", "Actor duplicado.");
+      }
+    }
+  }
+
+  // REGLA DE ORO: Solo mover la cámara si el mouse está dentro del Viewport 3D y se presiona ALT
+  if (m_gui.m_viewportHovered && io.KeyAlt)
+  {
+    float deltaX = io.MouseDelta.x;
+    float deltaY = io.MouseDelta.y;
+
+    // Definir el punto de pivote para orbitar (Target)
+    // Si hay un actor seleccionado, orbitamos a su alrededor; si no, al origen (0,0,0)
+    EU::Vector3 pivotTarget(0.0f, 0.0f, 0.0f);
+    if (selectedActor) {
+      // Nota: Si tu componente Transform guarda la posición, adáptalo a tu sistema de ECS:
+      // pivotTarget = selectedActor->getComponent<TransformComponent>()->getPosition();
+    }
+
+    // 1. ALT + CLIC IZQUIERDO = ORBITAR (Orbit)
+    if (io.MouseDown[0])
+    {
+      float sensitivity = 0.005f;
+      float angleX = deltaX * sensitivity;
+      float angleY = deltaY * sensitivity;
+
+      // Obtener vector desde el objetivo hasta la cámara
+      XMVECTOR camPos = XMVectorSet(m_camera.getPosition().x, m_camera.getPosition().y, m_camera.getPosition().z, 1.0f);
+      XMVECTOR targetPos = XMVectorSet(pivotTarget.x, pivotTarget.y, pivotTarget.z, 1.0f);
+      XMVECTOR dir = XMVectorSubtract(camPos, targetPos);
+
+      // Rotar horizontalmente alrededor del eje Y global (Yaw)
+      dir = XMVector3TransformCoord(dir, XMMatrixRotationY(angleX));
+
+      // Rotar verticalmente alrededor del eje Right local de la cámara (Pitch)
+      XMVECTOR right = XMVectorSet(m_camera.GetRight().x, m_camera.GetRight().y, m_camera.GetRight().z, 0.0f);
+      dir = XMVector3TransformCoord(dir, XMMatrixRotationAxis(right, angleY));
+
+      // Calcular la nueva posición de la cámara sumando el vector rotado al pivote
+      XMVECTOR newCamPos = XMVectorAdd(targetPos, dir);
+      XMFLOAT3 finalPos;
+      XMStoreFloat3(&finalPos, newCamPos);
+
+      m_camera.setPosition(finalPos.x, finalPos.y, finalPos.z);
+      m_camera.lookAt(m_camera.getPosition(), pivotTarget);
+    }
+    // 2. ALT + CLIC MEDIO (RUEDA) = PANEO (Pan)
+    else if (io.MouseDown[2])
+    {
+      float panSpeed = 0.015f;
+      // Moverse lateralmente
+      m_camera.strafe(-deltaX * panSpeed);
+
+      // Moverse verticalmente en el eje Up local de la cámara
+      EU::Vector3 upVector = m_camera.GetUp();
+      m_camera.setPosition(m_camera.getPosition() + upVector * (deltaY * panSpeed));
+    }
+    // 3. ALT + CLIC DERECHO = ZOOM (Zoom suave)
+    else if (io.MouseDown[1])
+    {
+      float zoomSpeed = 0.04f;
+      // Caminar hacia adelante o atrás usando tu método walk
+      m_camera.walk(-deltaY * zoomSpeed);
+    }
+  }
+  // ----------------------------------------------------------------------
+
   m_camera.updateViewMatrix();
 
   XMStoreFloat4x4(&m_constantBufferStruct.View, XMMatrixTranspose(m_camera.getView()));
@@ -480,11 +658,13 @@ BaseApp::update(float deltaTime) {
   m_skybox.update(m_deviceContext, m_camera);
 
   m_sceneGraph.update(deltaTime, m_deviceContext);
+
+  m_gui.drawLogConsole();
 }
 
 void
 BaseApp::render() {
-  handleEditorViewportResize();
+  //handleEditorViewportResize();
 
   float ClearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 
@@ -492,7 +672,7 @@ BaseApp::render() {
   m_sceneGraph.gatherRenderScene(m_renderScene, m_camera);
   m_renderScene.skybox = &m_skybox;
 
-  m_forwardRenderer.render(
+  m_renderPipeline.render(
     m_deviceContext,
     m_camera,
     m_renderScene,
@@ -515,7 +695,7 @@ BaseApp::destroy() {
 
   m_sceneGraph.destroy();
   m_editorViewportPass.destroy();
-  m_forwardRenderer.destroy();
+  m_renderPipeline.destroy();
   m_cyberGunRenderMesh.destroy();
 
   m_AlbedoSRV.destroy();
@@ -534,6 +714,9 @@ BaseApp::destroy() {
   m_renderTargetView.destroy();
   m_swapChain.destroy();
   m_backBuffer.destroy();
+
+  m_lightIconTexture.destroy();
+
 
   if (m_guiInitialized) {
     m_gui.destroy();
@@ -665,7 +848,7 @@ BaseApp::handleEditorViewportResize()
   }
 
   m_editorViewportPass.swap(newPass);
-  m_forwardRenderer.resize(m_device, m_pendingViewportWidth, m_pendingViewportHeight);
+  m_renderPipeline.resize(m_device, m_pendingViewportWidth, m_pendingViewportHeight);
 
   m_editorViewportResizePending = false;
 }
@@ -677,6 +860,56 @@ BaseApp::getDefaultScenePath() const
   return "Saved/DefaultScene.wvscene";
 }
 
+EU::TSharedPointer<Actor>
+BaseApp::createLightActor(const std::string& name)
+{
+  EU::TSharedPointer<Actor> lightActor = EU::MakeShared<Actor>(m_device);
+  if (lightActor.isNull()) {
+    ERROR("Main", "createLightActor", "Failed to create Light Actor.");
+    return lightActor;
+  }
+
+  // Cuenta cuantas luces hay (para nombrar y desplazar la nueva)
+  size_t lightActorCount = 0;
+  for (const auto& actor : m_actors) {
+    if (!actor.isNull() && !actor->getComponent<LightComponent>().isNull()) {
+      ++lightActorCount;
+    }
+  }
+
+  lightActor->setName(name.empty()
+    ? "Light Actor " + std::to_string(lightActorCount + 1)
+    : name);
+
+  EU::TSharedPointer<LightComponent> lightComponent = lightActor->getComponent<LightComponent>();
+  if (!lightComponent) {
+    lightComponent = EU::MakeShared<LightComponent>();
+    lightActor->addComponent(lightComponent);
+  }
+
+  // Luz puntual configurable por defecto
+  lightComponent->getLightData().type = LightType::Point;
+  lightComponent->getLightData().direction = EU::Vector3(-0.20f, -1.0f, 1.0f);
+  lightComponent->getLightData().color = EU::Vector3(1.0f, 1.0f, 1.0f);
+  lightComponent->getLightData().intensity = 1.0f;
+  lightComponent->getLightData().range = 12.0f;
+  lightComponent->setCastShadow(false);
+
+  // Transform inicial (se puede mover luego con el gizmo / inspector)
+  EU::TSharedPointer<Transform> transform = lightActor->getComponent<Transform>();
+  if (transform) {
+    const float lightOffset = static_cast<float>(lightActorCount) * 2.0f;
+    transform->setTransform(EU::Vector3(lightOffset, 3.0f, 0.0f),
+      EU::Vector3(0.0f, 0.0f, 0.0f),
+      EU::Vector3(1.0f, 1.0f, 1.0f));
+  }
+
+  m_actors.push_back(lightActor);
+  m_sceneGraph.addEntity(lightActor.get());
+  return lightActor;
+}
+
+
 bool
 BaseApp::saveScene(const std::string& path)
 {
@@ -686,68 +919,68 @@ BaseApp::saveScene(const std::string& path)
     return false;
   }
 
-  stream << "WVSCENE 1\n";
-  stream << "ACTOR_COUNT " << m_actors.size() << "\n";
+  stream << "WVSCENE 1";
+    stream << "ACTOR_COUNT " << m_actors.size() << "";
 
-  for (size_t actorIndex = 0; actorIndex < m_actors.size(); ++actorIndex) {
-    const EU::TSharedPointer<Actor>& actor = m_actors[actorIndex];
-    if (actor.isNull()) {
-      continue;
-    }
-
-    stream << "ACTOR " << actorIndex << " " << std::quoted(actor->getName()) << "\n";
-
-    EU::TSharedPointer<Transform> transform = actor->getComponent<Transform>();
-    if (transform) {
-      const EU::Vector3& position = transform->getPosition();
-      const EU::Vector3& rotation = transform->getRotation();
-      const EU::Vector3& scale = transform->getScale();
-
-      stream << "POSITION " << position.x << " " << position.y << " " << position.z << "\n";
-      stream << "ROTATION " << rotation.x << " " << rotation.y << " " << rotation.z << "\n";
-      stream << "SCALE " << scale.x << " " << scale.y << " " << scale.z << "\n";
-    }
-
-    EU::TSharedPointer<MeshRendererComponent> meshRenderer =
-      actor->getComponent<MeshRendererComponent>();
-
-    if (meshRenderer) {
-      stream << "VISIBLE " << (meshRenderer->isVisible() ? 1 : 0) << "\n";
-      stream << "CAST_SHADOW " << (meshRenderer->canCastShadow() ? 1 : 0) << "\n";
-
-      const std::vector<MaterialInstance*>& materials = meshRenderer->getMaterialInstances();
-      stream << "MATERIAL_COUNT " << materials.size() << "\n";
-
-      for (size_t i = 0; i < materials.size(); ++i) {
-        MaterialInstance* materialInstance = materials[i];
-        if (!materialInstance) {
-          stream << "MATERIAL " << i << " 0 0 1 1 1 1 0 1 1 1 0.5\n";
-          continue;
-        }
-
-        Material* material = materialInstance->getMaterial();
-        const MaterialParams& params = materialInstance->getParams();
-
-        const int domain = material ? static_cast<int>(material->getDomain()) : 0;
-        const int blendMode = material ? static_cast<int>(material->getBlendMode()) : 0;
-
-        stream << "MATERIAL " << i << " "
-          << domain << " "
-          << blendMode << " "
-          << params.baseColor.x << " "
-          << params.baseColor.y << " "
-          << params.baseColor.z << " "
-          << params.baseColor.w << " "
-          << params.metallic << " "
-          << params.roughness << " "
-          << params.ao << " "
-          << params.normalScale << " "
-          << params.alphaCutoff << "\n";
+    for (size_t actorIndex = 0; actorIndex < m_actors.size(); ++actorIndex) {
+      const EU::TSharedPointer<Actor>& actor = m_actors[actorIndex];
+      if (actor.isNull()) {
+        continue;
       }
-    }
 
-    stream << "END_ACTOR\n";
-  }
+      stream << "ACTOR " << actorIndex << " " << std::quoted(actor->getName()) << " ";
+
+        EU::TSharedPointer<Transform> transform = actor->getComponent<Transform>();
+      if (transform) {
+        const EU::Vector3& position = transform->getPosition();
+        const EU::Vector3& rotation = transform->getRotation();
+        const EU::Vector3& scale = transform->getScale();
+
+        stream << "POSITION " << position.x << " " << position.y << " " << position.z << "";
+          stream << "ROTATION " << rotation.x << " " << rotation.y << " " << rotation.z << "";
+          stream << "SCALE " << scale.x << " " << scale.y << " " << scale.z << " ";
+      }
+
+      EU::TSharedPointer<MeshRendererComponent> meshRenderer =
+        actor->getComponent<MeshRendererComponent>();
+
+      if (meshRenderer) {
+        stream << "VISIBLE " << (meshRenderer->isVisible() ? 1 : 0) << " ";
+          stream << "CAST_SHADOW " << (meshRenderer->canCastShadow() ? 1 : 0) << " ";
+
+          const std::vector<MaterialInstance*>&materials = meshRenderer->getMaterialInstances();
+        stream << "MATERIAL_COUNT " << materials.size() << " ";
+
+          for (size_t i = 0; i < materials.size(); ++i) {
+            MaterialInstance* materialInstance = materials[i];
+            if (!materialInstance) {
+              stream << "MATERIAL " << i << " 0 0 1 1 1 1 0 1 1 1 0.5  ";
+                continue;
+            }
+
+            Material* material = materialInstance->getMaterial();
+            const MaterialParams& params = materialInstance->getParams();
+
+            const int domain = material ? static_cast<int>(material->getDomain()) : 0;
+            const int blendMode = material ? static_cast<int>(material->getBlendMode()) : 0;
+
+            stream << "MATERIAL " << i << " "
+              << domain << " "
+              << blendMode << " "
+              << params.baseColor.x << " "
+              << params.baseColor.y << " "
+              << params.baseColor.z << " "
+              << params.baseColor.w << " "
+              << params.metallic << " "
+              << params.roughness << " "
+              << params.ao << " "
+              << params.normalScale << " "
+              << params.alphaCutoff << " ";
+          }
+      }
+
+      stream << "END_ACTOR  ";
+    }
 
   stream << "LIGHT "
     << m_constantBufferStruct.LightDir.x << " "
@@ -755,10 +988,10 @@ BaseApp::saveScene(const std::string& path)
     << m_constantBufferStruct.LightDir.z << " "
     << m_constantBufferStruct.LightColor.x << " "
     << m_constantBufferStruct.LightColor.y << " "
-    << m_constantBufferStruct.LightColor.z << "\n";
+    << m_constantBufferStruct.LightColor.z << "  ";
 
-  stream << "END_SCENE\n";
-  return true;
+    stream << "END_SCENE ";
+    return true;
 }
 
 bool
@@ -916,4 +1149,65 @@ BaseApp::loadScene(const std::string& path)
     }
   }
   return true;
+}
+
+EU::TSharedPointer<Actor>
+BaseApp::cloneActor(EU::TSharedPointer<Actor> original) {
+  if (original.isNull()) return EU::TSharedPointer<Actor>();
+
+  EU::TSharedPointer<Actor> newActor = EU::MakeShared<Actor>(m_device);
+  newActor->setName(original->getName() + " (Copy)");
+
+  // 1. Copiar Transform
+  auto origTransform = original->getComponent<Transform>();
+  auto newTransform = newActor->getComponent<Transform>();
+  if (origTransform && newTransform) {
+    newTransform->setTransform(origTransform->getPosition(),
+      origTransform->getRotation(),
+      origTransform->getScale());
+    newTransform->rebuildMatrixFromVectors();
+  }
+
+  // ---------------------------------------------------------------------
+  // 2. CORRECCIÓN: Copiar MeshRendererComponent (Para Render Deferred PBR)
+  // ---------------------------------------------------------------------
+  auto origMeshRenderer = original->getComponent<MeshRendererComponent>();
+  if (origMeshRenderer) {
+    // Creamos el componente porque el Actor no lo trae por defecto
+    EU::TSharedPointer<MeshRendererComponent> newMeshRenderer = EU::MakeShared<MeshRendererComponent>();
+    newMeshRenderer->setMesh(origMeshRenderer->getMesh());
+    newMeshRenderer->setMaterialInstances(origMeshRenderer->getMaterialInstances());
+    newMeshRenderer->setVisible(origMeshRenderer->isVisible());
+    newMeshRenderer->setCastShadow(origMeshRenderer->canCastShadow());
+
+    // ¡Lo agregamos al nuevo Actor!
+    newActor->addComponent(newMeshRenderer);
+  }
+
+  // 3. Copiar las mallas y texturas clásicas (Por si las usas para colisiones o el render del Skybox)
+  if (!original->getMeshes().empty()) {
+    newActor->setMesh(m_device, original->getMeshes());
+  }
+  if (!original->getTextures().empty()) {
+    newActor->setTextures(original->getTextures());
+  }
+  // ---------------------------------------------------------------------
+
+  // 4. Copiar Luz (si tiene)
+  auto origLight = original->getComponent<LightComponent>();
+  if (origLight) {
+    EU::TSharedPointer<LightComponent> newLight = EU::MakeShared<LightComponent>();
+    newLight->getLightData() = origLight->getLightData();
+    newLight->setCastShadow(origLight->canCastShadow());
+    newActor->addComponent(newLight);
+  }
+
+  // Forzar llenado del Constant Buffer para el primer frame
+  newActor->update(0.016f, m_deviceContext);
+
+  // 5. Registrar en el motor
+  m_actors.push_back(newActor);
+  m_sceneGraph.addEntity(newActor.get());
+
+  return newActor;
 }

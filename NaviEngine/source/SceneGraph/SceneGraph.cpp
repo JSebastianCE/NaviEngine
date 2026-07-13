@@ -223,8 +223,19 @@ SceneGraph::gatherRenderScene(RenderScene& outScene, const Camera& camera) {
 
 		auto lightComponent = entity->getComponent<LightComponent>();
 		if (lightComponent) {
-			outScene.directionalLights.push_back(lightComponent->getLightData());
+			LightData lightData = lightComponent->getLightData();
+
+			// Sincroniza la luz con el Transform del actor (posicion mundial real)
+			auto lightTransform = entity->getComponent<Transform>();
+			if (lightTransform) {
+				XMFLOAT4X4 lw{};
+				XMStoreFloat4x4(&lw, lightTransform->worldMatrix);
+				lightData.position = EU::Vector3(lw._41, lw._42, lw._43);
+			}
+
+			outScene.directionalLights.push_back(lightData);
 		}
+
 
 		auto meshRenderer = entity->getComponent<MeshRendererComponent>();
 		auto transform = entity->getComponent<Transform>();
