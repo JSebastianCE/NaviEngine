@@ -2,6 +2,8 @@
 #include "ResourceManager.h"
 #include <fstream>
 #include <iomanip>
+#include <cmath>
+#include <algorithm>
 
 // Necesario para que Win32 reenvíe los inputs a ImGui
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -452,11 +454,12 @@ BaseApp::update(float deltaTime) {
 
   m_gui.drawViewportPanel(m_editorViewportPass.getSRV());
   m_gui.drawViewportLightIcons(m_actors, m_camera, m_lightIconTexture.m_textureFromImg);
-  m_gui.drawRenderDebugPanel(
+ 
+  /*m_gui.drawRenderDebugPanel(
     m_renderPipeline.getPreShadowSRV(),
     m_editorViewportPass.getSRV(),
     m_renderPipeline.getShadowMapSRV()
-  );
+  );*/
 
   m_gui.outliner(m_actors);
 
@@ -572,6 +575,11 @@ BaseApp::update(float deltaTime) {
         MESSAGE("Editor", "Shortcuts", "Actor duplicado.");
       }
     }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_1)) m_gui.m_currentGizmoTool = 0; // Seleccionar
+    if (ImGui::IsKeyPressed(ImGuiKey_2)) m_gui.m_currentGizmoTool = 1; // Traslación
+    if (ImGui::IsKeyPressed(ImGuiKey_3)) m_gui.m_currentGizmoTool = 2; // Rotación
+    if (ImGui::IsKeyPressed(ImGuiKey_4)) m_gui.m_currentGizmoTool = 3; // Escala
   }
 
   // REGLA DE ORO: Solo mover la cámara si el mouse está dentro del Viewport 3D y se presiona ALT
@@ -633,7 +641,12 @@ BaseApp::update(float deltaTime) {
       // Caminar hacia adelante o atrás usando tu método walk
       m_camera.walk(-deltaY * zoomSpeed);
     }
+
+
   }
+
+
+
   // ----------------------------------------------------------------------
 
   m_camera.updateViewMatrix();

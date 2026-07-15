@@ -668,7 +668,7 @@ GUI::closeApp() {
 
   if (ImGui::BeginPopupModal("Exit?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::Text("Estas a punto de salir de la aplicacion.Estas seguro ?");
-      ImGui::Separator();
+    ImGui::Separator();
 
     if (ImGui::Button("OK", ImVec2(120, 0))) {
       exit(0);
@@ -873,8 +873,7 @@ GUI::outliner(const std::vector<EU::TSharedPointer<Actor>>& actors) {
 // GIZMOS
 // ==========================================================
 
-void
-GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor)
+void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor)
 {
   if (actor.isNull()) return;
 
@@ -892,23 +891,9 @@ GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor)
     return;
   }
 
-  float position[3] = {
-    transform->getPosition().x,
-    transform->getPosition().y,
-    transform->getPosition().z
-  };
-
-  float rotation[3] = {
-    RadToDeg(transform->getRotation().x),
-    RadToDeg(transform->getRotation().y),
-    RadToDeg(transform->getRotation().z)
-  };
-
-  float scale[3] = {
-    transform->getScale().x,
-    transform->getScale().y,
-    transform->getScale().z
-  };
+  float position[3] = { transform->getPosition().x, transform->getPosition().y, transform->getPosition().z };
+  float rotation[3] = { RadToDeg(transform->getRotation().x), RadToDeg(transform->getRotation().y), RadToDeg(transform->getRotation().z) };
+  float scale[3] = { transform->getScale().x, transform->getScale().y, transform->getScale().z };
 
   float matrix[16];
   ImGuizmo::RecomposeMatrixFromComponents(position, rotation, scale, matrix);
@@ -927,40 +912,35 @@ GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> actor)
 
   ImGuizmo::SetRect(rectX, rectY, rectW, rectH);
 
-  bool canManipulate = m_viewportHovered || m_viewportActive || m_isUsingGizmo;
+  // NOTA IMPORTANTE: mCurrentGizmoMode probablemente esté declarado estático al principio de tu archivo, déjalo así.
+  // Transformamos nuestro int a la operación de ImGuizmo
+  ImGuizmo::OPERATION activeOperation = ImGuizmo::TRANSLATE;
+  if (m_currentGizmoTool == 1) activeOperation = ImGuizmo::TRANSLATE;
+  if (m_currentGizmoTool == 2) activeOperation = ImGuizmo::ROTATE;
+  if (m_currentGizmoTool == 3) activeOperation = ImGuizmo::SCALE;
+
+  // Si la herramienta es 0 (Selección), apagamos el Gizmo para que no estorbe
+  bool canManipulate = (m_viewportHovered || m_viewportActive || m_isUsingGizmo) && (m_currentGizmoTool != 0);
+
   if (canManipulate)
   {
-    ImGuizmo::Manipulate(
-      view,
-      proj,
-      mCurrentGizmoOperation,
-      mCurrentGizmoMode,
-      matrix
-    );
+    ImGuizmo::Manipulate(view, proj, activeOperation, ImGuizmo::LOCAL, matrix); // Cambia LOCAL por mCurrentGizmoMode si lo tienes como variable estática
   }
 
   m_isUsingGizmo = ImGuizmo::IsUsing();
 
   if (m_isUsingGizmo)
   {
-    float outPos[3];
-    float outRot[3];
-    float outScale[3];
-
+    float outPos[3], outRot[3], outScale[3];
     ImGuizmo::DecomposeMatrixToComponents(matrix, outPos, outRot, outScale);
 
     transform->setPosition(EU::Vector3(outPos[0], outPos[1], outPos[2]));
-    transform->setRotation(EU::Vector3(
-      DegToRad(outRot[0]),
-      DegToRad(outRot[1]),
-      DegToRad(outRot[2])
-    ));
+    transform->setRotation(EU::Vector3(DegToRad(outRot[0]), DegToRad(outRot[1]), DegToRad(outRot[2])));
     transform->setScale(EU::Vector3(outScale[0], outScale[1], outScale[2]));
   }
 }
 
-void
-GUI::drawGizmoToolbar()
+void GUI::drawGizmoToolbar()
 {
   ImGui::SetNextWindowBgAlpha(0.0f);
 
@@ -974,30 +954,41 @@ GUI::drawGizmoToolbar()
 
   if (ImGui::Begin("GizmoToolBar", nullptr, window_flags))
   {
-    auto buttonMode = [&](const char* label, ImGuizmo::OPERATION op, const char* shortcut)
+    // Cambiamos el parámetro ImGuizmo::OPERATION por int toolId
+    auto buttonMode = [&](const char* label, int toolId, const char* shortcut)
       {
-        bool isActive = (mCurrentGizmoOperation == op);
-        if (isActive)
-          ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.8f, 1.0f));
+        bool isActive = (m_currentGizmoTool == toolId);
 
-        if (ImGui::Button(label))
-          mCurrentGizmoOperation = op;
+        if (isActive) {
+          ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.0f, 1.0f));
+        }
 
-        if (ImGui::IsItemHovered())
+        if (ImGui::Button(label, ImVec2(50, 30))) {
+          m_currentGizmoTool = toolId;
+        }
+
+        if (ImGui::IsItemHovered()) {
           ImGui::SetTooltip("%s (%s)", label, shortcut);
+        }
 
-        if (isActive)
+        if (isActive) {
           ImGui::PopStyleColor();
-
-        ImGui::SameLine();
+        }
       };
 
-    buttonMode("T", ImGuizmo::TRANSLATE, "W");
-    buttonMode("R", ImGuizmo::ROTATE, "E");
-    buttonMode("S", ImGuizmo::SCALE, "R");
+    // Botones rediseñados y conectados a los números
+    buttonMode("Sel", 0, "1");
+    buttonMode("T", 1, "2");
+    buttonMode("R", 2, "3");
+    buttonMode("S", 3, "4");
 
-    if (ImGui::Button(mCurrentGizmoMode == ImGuizmo::WORLD ? "Global" : "Local"))
-      mCurrentGizmoMode = (mCurrentGizmoMode == ImGuizmo::WORLD) ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Mantenemos el botón de global/local asumiendo que mCurrentGizmoMode está declarado arriba
+    // Si mCurrentGizmoMode te marca error, dímelo y lo corregimos rápido
+    // if (ImGui::Button(mCurrentGizmoMode == ImGuizmo::WORLD ? "Global" : "Local", ImVec2(50, 30))) ...
   }
 
   ImGui::End();
@@ -1324,27 +1315,59 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
 {
   ImGui::Begin("GBuffer Debug");
 
-  // ---------------------------------------------------------
-  // 1. VISUALIZADOR PRINCIPAL (ARRIBA)
-  // ---------------------------------------------------------
-  ImGui::Text("Modo de Visualizacion:");
-
-  ImGui::RadioButton("Final PBR", &m_deferredDebugViewMode, 0); ImGui::SameLine();
-  ImGui::RadioButton("Albedo", &m_deferredDebugViewMode, 1); ImGui::SameLine();
-  ImGui::RadioButton("Normal", &m_deferredDebugViewMode, 2); ImGui::SameLine();
-  ImGui::RadioButton("Posicion", &m_deferredDebugViewMode, 3);
-
+  // ----------------------------------------------------------------------
+  // 1. HERRAMIENTAS DE ESCENA
+  // ----------------------------------------------------------------------
+  ImGui::TextDisabled("Herramientas de Escena:");
+  if (ImGui::Button("Create Light Actor", ImVec2(-1, 30))) {
+    m_requestCreateLightActor = true;
+  }
   ImGui::Checkbox("Ver Factor de Sombra", &m_visualizeDeferredShadowFactor);
+
+  ImGui::Spacing();
+  ImGui::Separator();
   ImGui::Spacing();
 
-  ID3D11ShaderResourceView* mainSRV = nullptr;
-  switch (m_deferredDebugViewMode) {
-  case 0: mainSRV = m_renderDebugFinalSRV ? m_renderDebugFinalSRV : albedoMetallicSRV; break; // Evita que se vea negro
-  case 1: mainSRV = albedoMetallicSRV; break;
-  case 2: mainSRV = normalRoughnessSRV; break;
-  case 3: mainSRV = worldAoSRV; break;
-  default: mainSRV = albedoMetallicSRV; break;
-  }
+  // ---------------------------------------------------------
+  // 2. CONFIGURACIÓN DE LOS 10 MODOS SEPARADOS
+  // ---------------------------------------------------------
+  // Estructura para organizar nuestros 10 botones de forma independiente
+  struct DebugMode {
+    const char* name;
+    int engineShaderMode; // El ID que tu RenderPipeline usa para el Viewport
+    ID3D11ShaderResourceView* rawSrv; // La textura fuente
+  };
+
+  DebugMode modes[10] = {
+    // Columna Izquierda (Canales RGB principales)
+    { "Final Render",  0, m_renderDebugFinalSRV },
+    { "Albedo",        2, albedoMetallicSRV },
+    { "Normal",        3, normalRoughnessSRV },
+    { "World Pos",     6, worldAoSRV },
+    { "Emissive",      8, emissiveAlphaSRV },
+
+    // Columna Derecha (Canales Alfa y Sombras)
+    { "Metallic",      5, albedoMetallicSRV },
+    { "Roughness",     4, normalRoughnessSRV },
+    { "AO",            7, worldAoSRV },
+    { "Pre-Shadow",   -1, m_renderDebugPreShadowSRV },
+    { "Shadow Map",   -2, m_renderDebugShadowMapSRV }
+  };
+
+  static int selectedIndex = 0; // Recuerda qué botón pulsamos
+
+  // ---------------------------------------------------------
+  // 3. PREVIEW PRINCIPAL (ARRIBA)
+  // ---------------------------------------------------------
+  ImGui::Text("Preview Principal:");
+
+  // Texto verde que indica qué estamos viendo
+  ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.2f, 1.0f), "Mostrando: %s", modes[selectedIndex].name);
+
+  ID3D11ShaderResourceView* mainSRV = modes[selectedIndex].rawSrv;
+
+  // Fallback de seguridad: si Final Render no está listo, mostrar Albedo
+  if (selectedIndex == 0 && !mainSRV) mainSRV = albedoMetallicSRV;
 
   if (mainSRV) {
     float w, h;
@@ -1356,7 +1379,12 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
     }
   }
   else {
-    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Textura principal no disponible.");
+    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Textura no disponible.");
+  }
+
+  // ¡MAGIA!: Actualizamos la variable que el BaseApp lee para cambiar el shader del Viewport principal
+  if (modes[selectedIndex].engineShaderMode >= 0) {
+    m_deferredDebugViewMode = modes[selectedIndex].engineShaderMode;
   }
 
   ImGui::Spacing();
@@ -1364,166 +1392,59 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
   ImGui::Spacing();
 
   // ---------------------------------------------------------
-  // 2. PREVISUALIZADORES EN 2 COLUMNAS CON TABLAS (ABAJO)
+  // 4. LOS 10 BOTONES SEPARADOS EN 2 COLUMNAS (ABAJO)
   // ---------------------------------------------------------
-  ImGui::TextDisabled("Render Targets Internos del G-Buffer:");
+  ImGui::TextDisabled("Render Targets (Selecciona para ver en Viewport):");
   ImGui::Spacing();
 
-  // Usar la API de Tablas garantiza 2 columnas perfectamente simétricas
   if (ImGui::BeginTable("GBufferTable", 2, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchSame)) {
 
-    auto DrawPreview = [&](const char* title, ID3D11ShaderResourceView* srv) {
-      ImGui::Text("%s", title);
-      if (srv) {
+    // Función lambda para dibujar cada celda limpia y sin crasheos
+    auto DrawGridItem = [&](int index) {
+
+      // 1. Guardamos si ESTABA seleccionado ANTES de hacer clic
+      bool wasSelected = (index == selectedIndex);
+
+      if (wasSelected) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 1.0f, 1.0f));
+      }
+
+      // 2. Dibujamos el botón. Si hacemos clic, actualiza el índice global
+      if (ImGui::Button(modes[index].name, ImVec2(ImGui::GetContentRegionAvail().x, 25))) {
+        selectedIndex = index;
+      }
+
+      // 3. Usamos la variable guardada para hacer el Pop (¡esto evita el crasheo!)
+      if (wasSelected) {
+        ImGui::PopStyleColor();
+      }
+
+      // 4. Dibujar miniatura debajo del botón
+      if (modes[index].rawSrv) {
         float w, h;
-        if (GetSRVSize(srv, w, h)) {
+        if (GetSRVSize(modes[index].rawSrv, w, h)) {
           float aspect = h / w;
-          // Toma el ancho disponible dentro de la celda de la tabla
           float previewW = ImGui::GetContentRegionAvail().x;
           float previewH = previewW * aspect;
-          ImGui::Image((void*)srv, ImVec2(previewW, previewH));
+          ImGui::Image((void*)modes[index].rawSrv, ImVec2(previewW, previewH));
         }
       }
       else {
         ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "[ Vacio ]");
       }
-      };
+    };
 
-    // --- Fila 1 ---
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    DrawPreview("Albedo / Metallic", albedoMetallicSRV);
+    // Dibujamos las 5 filas (10 elementos en total)
+    for (int row = 0; row < 5; ++row) {
+      ImGui::TableNextRow();
 
-    ImGui::TableSetColumnIndex(1);
-    DrawPreview("Normal / Roughness", normalRoughnessSRV);
+      // Columna 1 (Índices del 0 al 4: Final, Albedo, Normal, World Pos, Emissive)
+      ImGui::TableSetColumnIndex(0);
+      DrawGridItem(row);
 
-    // --- Fila 2 ---
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    DrawPreview("World Pos / AO", worldAoSRV);
-
-    ImGui::TableSetColumnIndex(1);
-    DrawPreview("Emissive / Alpha", emissiveAlphaSRV);
-
-    ImGui::EndTable();
-  }
-
-  ImGui::End();
-}
-
-void
-GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
-  ID3D11ShaderResourceView* normalRoughnessSRV,
-  ID3D11ShaderResourceView* worldAoSRV,
-  ID3D11ShaderResourceView* emissiveAlphaSRV,
-  EU::TSharedPointer<Actor> selectedActor)
-{
-  ImGui::Begin("GBuffer Debug");
-
-  // ---- Modo de visualizacion que se aplica al viewport (deferred debug) ----
-  static const char* kViewModes[] = {
-    "Final", "Albedo", "Normal", "Roughness",
-    "Metallic", "World Pos", "AO", "Emissive"
-  };
-  // Indice del combo -> DebugViewMode del shader (0 = final, 2..8 = canales)
-  static const int kViewModeValues[] = { 0, 2, 3, 4, 5, 6, 7, 8 };
-
-  ImGui::TextDisabled("Visualizacion del viewport");
-  static int currentMode = 0;
-  ImGui::SetNextItemWidth(-1.0f);
-  ImGui::Combo("##DeferredViewMode", &currentMode, kViewModes, IM_ARRAYSIZE(kViewModes));
-  ImGui::Checkbox("Visualizar Shadow Factor", &m_visualizeDeferredShadowFactor);
-
-  // Se publica para que BaseApp lo lea y lo pase al RenderPipeline.
-  m_deferredDebugViewMode = kViewModeValues[currentMode];
-
-  ImGui::Separator();
-
-  // ----------------------------------------------------------------------
-  // --- NUEVO: SECCIÓN DE HERRAMIENTAS DE ESCENA (BOTÓN CREATE LIGHT) ---
-  // ----------------------------------------------------------------------
-  ImGui::Spacing();
-  ImGui::TextDisabled("Herramientas de Escena:");
-
-  // ImVec2(-1, 30) hace que el botón ocupe todo el ancho disponible (-1) y tenga 30px de alto
-  if (ImGui::Button("Create Light Actor", ImVec2(-1, 30)))
-  {
-    m_requestCreateLightActor = true; // Esto le avisa a BaseApp que debe crear la luz
-  }
-  ImGui::Spacing();
-  ImGui::Separator();
-  // ----------------------------------------------------------------------
-
-  // ---- Lista de texturas + preview grande ----
-  struct DebugView {
-    const char* label;
-    ID3D11ShaderResourceView* srv;
-  };
-
-  DebugView views[] = {
-    { "Final Render",        m_renderDebugFinalSRV },
-    { "Pre-Shadow",          m_renderDebugPreShadowSRV },
-    { "Shadow Map",          m_renderDebugShadowMapSRV },
-    { "GB: Albedo+Metallic", albedoMetallicSRV },
-    { "GB: Normal+Rough",    normalRoughnessSRV },
-    { "GB: World+AO",        worldAoSRV },
-    { "GB: Emissive+Alpha",  emissiveAlphaSRV },
-  };
-  const int viewCount = IM_ARRAYSIZE(views);
-
-  static int selectedView = 0;
-  if (selectedView >= viewCount) selectedView = 0;
-
-  if (ImGui::BeginTable("##GBufferLayout", 2,
-    ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingStretchProp)) {
-    ImGui::TableSetupColumn("Canales", ImGuiTableColumnFlags_WidthFixed, 196.0f);
-    ImGui::TableSetupColumn("Preview", ImGuiTableColumnFlags_WidthStretch);
-
-    // ---------- Columna izquierda: lista de miniaturas ----------
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-
-    if (!selectedActor.isNull()) {
-      ImGui::TextDisabled("Actor: %s", selectedActor->getName().c_str());
-      ImGui::Spacing();
-    }
-
-    for (int i = 0; i < viewCount; ++i) {
-      ImGui::PushID(i);
-
-      bool sel = (selectedView == i);
-      if (ImGui::Selectable(views[i].label, sel, 0, ImVec2(0.0f, 22.0f))) {
-        selectedView = i;
-      }
-
-      // Miniatura: se ve completa (letterbox), sin deformar.
-      if (views[i].srv) {
-        ImageAspectFit(views[i].srv, ImVec2(170.0f, 96.0f));
-      }
-      else {
-        ImGui::Dummy(ImVec2(170.0f, 96.0f));
-        ImGui::TextDisabled("  (sin textura)");
-      }
-
-      ImGui::PopID();
-    }
-
-    // ---------- Columna derecha: preview grande ----------
-    ImGui::TableSetColumnIndex(1);
-    ImGui::Text("%s", views[selectedView].label);
-    ImGui::Spacing();
-
-    ImVec2 avail = ImGui::GetContentRegionAvail();
-    if (avail.x < 1.0f) avail.x = 1.0f;
-    if (avail.y < 1.0f) avail.y = 1.0f;
-
-    // Preview: llena TODO el espacio sin deformar (recorta el sobrante).
-    if (views[selectedView].srv && avail.x > 16.0f && avail.y > 16.0f) {
-      ImageAspectFill(views[selectedView].srv, avail);
-    }
-    else {
-      ImGui::Dummy(avail);
-      ImGui::TextDisabled("No hay textura para esta vista");
+      // Columna 2 (Índices del 5 al 9: Metallic, Roughness, AO, Sombras)
+      ImGui::TableSetColumnIndex(1);
+      DrawGridItem(row + 5);
     }
 
     ImGui::EndTable();
@@ -1531,7 +1452,6 @@ GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
 
   ImGui::End();
 }
-
 
 void
 GUI::drawEditorDockspace()
