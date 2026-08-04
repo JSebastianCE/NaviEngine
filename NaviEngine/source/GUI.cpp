@@ -912,7 +912,6 @@ void GUI::editTransform(Camera& cam, Window& window, EU::TSharedPointer<Actor> a
 
   ImGuizmo::SetRect(rectX, rectY, rectW, rectH);
 
-  // NOTA IMPORTANTE: mCurrentGizmoMode probablemente esté declarado estático al principio de tu archivo, déjalo así.
   // Transformamos nuestro int a la operación de ImGuizmo
   ImGuizmo::OPERATION activeOperation = ImGuizmo::TRANSLATE;
   if (m_currentGizmoTool == 1) activeOperation = ImGuizmo::TRANSLATE;
@@ -988,7 +987,6 @@ void GUI::drawGizmoToolbar()
 
     // Mantenemos el botón de global/local asumiendo que mCurrentGizmoMode está declarado arriba
     // Si mCurrentGizmoMode te marca error, dímelo y lo corregimos rápido
-    // if (ImGui::Button(mCurrentGizmoMode == ImGuizmo::WORLD ? "Global" : "Local", ImVec2(50, 30))) ...
   }
 
   ImGui::End();
@@ -1221,8 +1219,7 @@ GUI::drawViewportPanel(ID3D11ShaderResourceView* viewportSRV)
   ImGui::End();
   ImGui::PopStyleVar();
 
-  // --- NUEVO: OVERLAY DE ESTADÍSTICAS ESTILO UNREAL ---
-// Nos posicionamos de forma relativa dentro del propio panel del Viewport
+  // OVERLAY DE ESTADÍSTICAS ESTILO UNREAL ---
   ImVec2 window_pos = ImGui::GetWindowPos();
   ImVec2 stats_pos = ImVec2(window_pos.x + 20.0f, window_pos.y + 40.0f); // Margen superior izquierdo
 
@@ -1382,7 +1379,6 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Textura no disponible.");
   }
 
-  // ¡MAGIA!: Actualizamos la variable que el BaseApp lee para cambiar el shader del Viewport principal
   if (modes[selectedIndex].engineShaderMode >= 0) {
     m_deferredDebugViewMode = modes[selectedIndex].engineShaderMode;
   }
@@ -1402,19 +1398,19 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
     // Función lambda para dibujar cada celda limpia y sin crasheos
     auto DrawGridItem = [&](int index) {
 
-      // 1. Guardamos si ESTABA seleccionado ANTES de hacer clic
+      // 1. si ESTABA seleccionado ANTES de hacer clic
       bool wasSelected = (index == selectedIndex);
 
       if (wasSelected) {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 1.0f, 1.0f));
       }
 
-      // 2. Dibujamos el botón. Si hacemos clic, actualiza el índice global
+      // 2. Si hacemos clic, actualiza el índice global
       if (ImGui::Button(modes[index].name, ImVec2(ImGui::GetContentRegionAvail().x, 25))) {
         selectedIndex = index;
       }
 
-      // 3. Usamos la variable guardada para hacer el Pop (¡esto evita el crasheo!)
+      // 3. Uvariable guardada para hacer el Pop (¡esto evita el crasheo!)
       if (wasSelected) {
         ImGui::PopStyleColor();
       }
@@ -1434,7 +1430,7 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
       }
     };
 
-    // Dibujamos las 5 filas (10 elementos en total)
+    // Dibuja las 5 filas (10 elementos en total)
     for (int row = 0; row < 5; ++row) {
       ImGui::TableNextRow();
 
@@ -1528,7 +1524,7 @@ void GUI::drawLogConsole() {
 
 void GUI::drawStatsPanel()
 {
-  // Creamos la pestaña dedicada
+  // Crea la pestaña dedicada
   ImGui::Begin("Engine Statistics");
 
   // 1. OBTENCIÓN DE DATOS DE RENDIMIENTO
@@ -1540,7 +1536,7 @@ void GUI::drawStatsPanel()
   static float fpsHistory[kBufferSize] = { 0.0f };
   static int currentOffset = 0;
 
-  // Guardamos el frame actual en el historial
+  // Guarda el frame actual en el historial
   fpsHistory[currentOffset] = fps;
   currentOffset = (currentOffset + 1) % kBufferSize;
 
@@ -1548,12 +1544,12 @@ void GUI::drawStatsPanel()
   ImGui::TextDisabled("Metricas de Rendimiento General:");
   ImGui::Spacing();
 
-  // Mostramos los FPS en verde brillante
+  //  los FPS en verde brillante
   ImGui::Text("Frames Per Second (FPS): ");
   ImGui::SameLine();
   ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.4f, 1.0f), "%.1f FPS", fps);
 
-  // Mostramos el tiempo de ciclo de CPU/GPU
+  // tiempo de ciclo de CPU/GPU
   ImGui::Text("Frame Time (Tiempo de Frame): ");
   ImGui::SameLine();
   ImGui::TextColored(ImVec4(0.2f, 0.7f, 1.0f, 1.0f), "%.2f ms", ms);
@@ -1565,7 +1561,7 @@ void GUI::drawStatsPanel()
   ImGui::TextDisabled("Grafico de Estabilidad de FPS (Historial):");
   ImGui::Spacing();
 
-  // Calculamos el FPS máximo y mínimo del historial para escalar el gráfico correctamente
+  // Calcula el FPS máximo y mínimo del historial para escalar el gráfico correctamente
   float maxFps = 0.0f;
   float minFps = 60.0f;
   for (int i = 0; i < kBufferSize; ++i) {
@@ -1583,7 +1579,7 @@ void GUI::drawStatsPanel()
   float scaleMin = minFps - 1.5f;
   float scaleMax = maxFps + 1.5f;
 
-  // Dibujamos el gráfico de líneas dinámico
+  // Dibuja el gráfico de líneas dinámico
   // Parámetros: Etiqueta, puntero al arreglo, tamaño, desfase del búfer, texto superpuesto, escala mínima, escala máxima, tamaño del gráfico (ancho automático, alto 80px)
   ImGui::PlotLines("##FPSGraph", fpsHistory, kBufferSize, currentOffset, overlayText, scaleMin, scaleMax, ImVec2(-1, 150));
 

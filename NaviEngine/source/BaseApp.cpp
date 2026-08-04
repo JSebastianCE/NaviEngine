@@ -60,27 +60,24 @@ BaseApp::run(HINSTANCE hInst, int nCmdShow) {
       QueryPerformanceCounter(&curr);
       float deltaTime = static_cast<float>(curr.QuadPart - prev.QuadPart) / freq.QuadPart;
 
-      // =================================================================
-      // --- NUEVO: LIMITADOR DE TIEMPO (120 FPS MAX) ---
-      // =================================================================
+      // LIMITADOR DE TIEMPO (120 FPS MAX) ---
       const float targetFPS = 120.0f;
       const float targetFrameTime = 1.0f / targetFPS; // Tiempo requerido por frame (~0.0083s)
 
       if (deltaTime < targetFrameTime)
       {
-        // Calculamos cuántos milisegundos nos sobran
+        // Calculam cuántos milisegundos nos sobran
         float sleepTimeMs = (targetFrameTime - deltaTime) * 1000.0f;
 
         // Si nos sobra más de 1 milisegundo, dormimos el hilo para ahorrar recursos
         if (sleepTimeMs > 1.0f) {
           Sleep(static_cast<DWORD>(sleepTimeMs - 1.0f));
         }
-        // Usamos 'continue' para volver al inicio del while SIN hacer update ni render aún
+        // Usa 'continue' para volver al inicio del while SIN hacer update ni render aún
         continue;
       }
-      // =================================================================
 
-      // Solo actualizamos "prev" cuando el tiempo haya superado el targetFrameTime (120 FPS)
+      // Solo actualiza "prev" cuando el tiempo haya superado el targetFrameTime (120 FPS)
       prev = curr;
 
       update(deltaTime);
@@ -166,7 +163,7 @@ BaseApp::init() {
 
 
   // --------------------------------------------------------------------------
-  // ACTOR PRINCIPAL: TU HACHA
+  // ACTOR PRINCIPAL:  HACHA
   // --------------------------------------------------------------------------
   m_cyberGun = EU::MakeShared<Actor>(m_device);
 
@@ -530,13 +527,13 @@ BaseApp::update(float deltaTime) {
   }
 
   // ----------------------------------------------------------------------
-  // NAVEGACIÓN DE CÁMARA DCC (ESTILO MAYA / BLENDER) --------
+  // NAVEGACIÓN DE CÁMARA DCC 
   // ----------------------------------------------------------------------
   ImGuiIO& io = ImGui::GetIO();
 
 
 
-    // SHORTCUTS DEL EDITOR (COPIAR, PEGAR, DUPLICAR) ------------
+    // SHORTCUTS DEL EDITOR (COPIAR, PEGAR, DUPLICAR) 
   bool isCtrlDown = io.KeyCtrl; // Detecta si Control está presionado
 
   // Asegurarnos de que no estamos escribiendo texto en un input de ImGui
@@ -555,7 +552,7 @@ BaseApp::update(float deltaTime) {
       if (!m_clipboardActor.isNull()) {
         auto newActor = cloneActor(m_clipboardActor);
 
-        // Opcional: Desfasar un poco la posición para que no aparezca exactamente dentro del original
+        // Desfasa un poco la posición para que no aparezca exactamente dentro del original
         auto trans = newActor->getComponent<Transform>();
         EU::Vector3 pos = trans->getPosition();
         trans->setPosition(EU::Vector3(pos.x + 1.0f, pos.y, pos.z + 1.0f));
@@ -582,7 +579,7 @@ BaseApp::update(float deltaTime) {
     if (ImGui::IsKeyPressed(ImGuiKey_4)) m_gui.m_currentGizmoTool = 3; // Escala
   }
 
-  // REGLA DE ORO: Solo mover la cámara si el mouse está dentro del Viewport 3D y se presiona ALT
+  // mover la cámara si el mouse está dentro del Viewport 3D y se presiona ALT
   if (m_gui.m_viewportHovered && io.KeyAlt)
   {
     float deltaX = io.MouseDelta.x;
@@ -592,7 +589,6 @@ BaseApp::update(float deltaTime) {
     // Si hay un actor seleccionado, orbitamos a su alrededor; si no, al origen (0,0,0)
     EU::Vector3 pivotTarget(0.0f, 0.0f, 0.0f);
     if (selectedActor) {
-      // Nota: Si tu componente Transform guarda la posición, adáptalo a tu sistema de ECS:
       // pivotTarget = selectedActor->getComponent<TransformComponent>()->getPosition();
     }
 
@@ -641,13 +637,7 @@ BaseApp::update(float deltaTime) {
       // Caminar hacia adelante o atrás usando tu método walk
       m_camera.walk(-deltaY * zoomSpeed);
     }
-
-
   }
-
-
-
-  // ----------------------------------------------------------------------
 
   m_camera.updateViewMatrix();
 
@@ -1182,7 +1172,7 @@ BaseApp::cloneActor(EU::TSharedPointer<Actor> original) {
   }
 
   // ---------------------------------------------------------------------
-  // 2. CORRECCIÓN: Copiar MeshRendererComponent (Para Render Deferred PBR)
+  // 2.Copiar MeshRendererComponent (Para Render Deferred PBR)
   // ---------------------------------------------------------------------
   auto origMeshRenderer = original->getComponent<MeshRendererComponent>();
   if (origMeshRenderer) {
@@ -1204,7 +1194,6 @@ BaseApp::cloneActor(EU::TSharedPointer<Actor> original) {
   if (!original->getTextures().empty()) {
     newActor->setTextures(original->getTextures());
   }
-  // ---------------------------------------------------------------------
 
   // 4. Copiar Luz (si tiene)
   auto origLight = original->getComponent<LightComponent>();
