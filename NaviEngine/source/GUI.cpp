@@ -12,6 +12,7 @@
 #include "Rendering/Material.h"
 #include "Rendering/MaterialInstance.h"
 #include "EngineUtilities/Utilities/Camera.h"
+#include "ECS/ParticleEmitterComponent.h"
 
 static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
 static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::LOCAL);
@@ -281,10 +282,10 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
   const ImVec4 textMain = ImVec4(1.00f, 0.97f, 0.92f, 0.96f);
   const ImVec4 textDisabled = ImVec4(0.92f, 0.82f, 0.70f, 0.78f);
 
-  // Fondos NARANJA translucido
-  const ImVec4 bgMain = ImVec4(0.85f, 0.38f, 0.08f, o);
-  const ImVec4 bgChild = ImVec4(0.78f, 0.34f, 0.06f, o * 0.92f);
-  const ImVec4 bgPopup = ImVec4(0.88f, 0.42f, 0.10f, o * 0.98f);
+  // Fondos GRIS MUY OSCURO translucido
+  const ImVec4 bgMain = ImVec4(0.12f, 0.12f, 0.12f, o);
+  const ImVec4 bgChild = ImVec4(0.10f, 0.10f, 0.10f, o * 0.92f);
+  const ImVec4 bgPopup = ImVec4(0.15f, 0.15f, 0.15f, o * 0.98f);
 
   // Interactuables VERDE claro translucido
   const ImVec4 frame = ImVec4(0.55f, 0.85f, 0.45f, 0.26f);
@@ -315,10 +316,10 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
   colors[ImGuiCol_FrameBgHovered] = frameHover;
   colors[ImGuiCol_FrameBgActive] = frameActive;
 
-  colors[ImGuiCol_TitleBg] = ImVec4(0.70f, 0.30f, 0.05f, 0.90f);
-  colors[ImGuiCol_TitleBgActive] = ImVec4(0.82f, 0.38f, 0.08f, 0.98f);
-  colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.60f, 0.26f, 0.04f, 0.75f);
-  colors[ImGuiCol_MenuBarBg] = ImVec4(0.80f, 0.36f, 0.07f, 0.92f);
+  colors[ImGuiCol_TitleBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.90f);
+  colors[ImGuiCol_TitleBgActive] = ImVec4(0.15f, 0.15f, 0.15f, 0.98f);
+  colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.05f, 0.05f, 0.05f, 0.75f);
+  colors[ImGuiCol_MenuBarBg] = ImVec4(0.10f, 0.10f, 0.10f, 0.92f);
 
   colors[ImGuiCol_Button] = button;
   colors[ImGuiCol_ButtonHovered] = buttonHover;
@@ -353,9 +354,9 @@ GUI::appleLiquidStyle(float opacity, ImVec4 accent) {
   colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.68f, 0.96f, 0.58f, 0.48f);
 
   colors[ImGuiCol_DockingPreview] = ImVec4(accent.x, accent.y, accent.z, 0.32f);
-  colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.55f, 0.25f, 0.05f, 0.65f);
+  colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.65f);
 
-  colors[ImGuiCol_TableHeaderBg] = ImVec4(0.78f, 0.34f, 0.06f, 0.88f);
+  colors[ImGuiCol_TableHeaderBg] = ImVec4(0.15f, 0.15f, 0.15f, 0.88f);
   colors[ImGuiCol_TableBorderStrong] = ImVec4(0.55f, 0.90f, 0.50f, 0.20f);
   colors[ImGuiCol_TableBorderLight] = ImVec4(0.55f, 0.90f, 0.50f, 0.10f);
   colors[ImGuiCol_TableRowBg] = ImVec4(1, 1, 1, 0.01f);
@@ -652,6 +653,8 @@ GUI::ToolBar() {
       ImGui::EndMenu();
     }
 
+
+
     ImGui::EndMainMenuBar();
   }
 }
@@ -686,110 +689,244 @@ GUI::closeApp() {
 // ==========================================================
 // INSPECTOR
 // ==========================================================
-
-void
-GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
+void GUI::inspectorGeneral(EU::TSharedPointer<Actor> actor) {
+  // --- 1. INICIO DE LA VENTANA ---
+  // Creamos la ventana flotante del Inspector.
   ImGui::Begin("Inspector");
 
+  // Si no hemos hecho clic en ningún actor, mostramos un mensaje gris y cortamos la ejecución.
   if (actor.isNull()) {
     ImGui::TextDisabled("No actor selected");
     ImGui::End();
     return;
   }
 
+  // --- 2. EDITOR DE NOMBRE ---
+  // Preparamos un espacio de texto para poder cambiarle el nombre al actor seleccionado.
   static char objectName[128] = "";
   static std::string previousName;
 
+  // Si seleccionamos un actor nuevo, actualizamos la caja de texto con su nombre real.
   if (previousName != actor->getName()) {
     previousName = actor->getName();
     strcpy_s(objectName, sizeof(objectName), actor->getName().c_str());
   }
 
+  // Si el usuario escribe algo en la caja, actualizamos el nombre del actor al instante.
   if (ImGui::InputText("Name", objectName, sizeof(objectName))) {
     actor->setName(objectName);
   }
 
-  auto transform = actor->getComponent<Transform>();
-  if (!transform.isNull()) {
-    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
-      inspectorContainer(actor);
+  ImGui::Separator();
+  ImGui::Spacing();
+
+  // --- 3. SISTEMA DE PESTAÑAS (TABS) ---
+  // Organizamos la información en pestañas para que el menú no sea gigante y desordenado.
+  if (ImGui::BeginTabBar("InspectorTabs")) {
+
+    // --------------------------------------------------
+    // PESTAÑA 1: GENERAL (Posición, Modelo 3D, Luces)
+    // --------------------------------------------------
+    if (ImGui::BeginTabItem("General")) {
+
+      // Revisamos si el actor tiene un componente de Transform (para moverse, rotar y escalar)
+      auto transform = actor->getComponent<Transform>();
+      if (!transform.isNull()) {
+        if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+          inspectorContainer(actor);
+        }
+      }
+
+      // Revisamos si el actor tiene un componente visual (para renderizar un modelo 3D)
+      auto renderer = actor->getComponent<MeshRendererComponent>();
+      if (!renderer.isNull()) {
+        // ... (Tu código actual para el Mesh Renderer y Materiales) ...
+      }
+
+      // Revisamos si el actor emite luz
+      auto light = actor->getComponent<LightComponent>();
+      if (!light.isNull()) {
+        // ... (Tu código actual para Light) ...
+      }
+
+      ImGui::EndTabItem();
     }
-  }
 
-  auto renderer = actor->getComponent<MeshRendererComponent>();
-  if (!renderer.isNull()) {
-    if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
-      bool visible = renderer->isVisible();
-      if (ImGui::Checkbox("Visible", &visible)) {
-        renderer->setVisible(visible);
+    // --------------------------------------------------
+    // PESTAÑA 2: PARTÍCULAS (Configuración del Emisor)
+    // --------------------------------------------------
+    if (ImGui::BeginTabItem("Particulas")) {
+
+      auto particleEmitter = actor->getComponent<ParticleEmitterComponent>();
+
+      // --- CASO A: EL ACTOR NO TIENE PARTÍCULAS ---
+      // Le ofrecemos al usuario un botón grande para convertir este actor en un emisor.
+      if (particleEmitter.isNull()) {
+        ImGui::Spacing();
+        ImGui::TextDisabled("Este actor no es un emisor de particulas.");
+        ImGui::Spacing();
+
+        if (ImGui::Button("Convertir en Emisor / Crear Particulas", ImVec2(-1, 30))) {
+          // Activamos una bandera (flag) que le avisará al motor que debe crear el componente en el próximo ciclo
+          m_requestCreateParticleActor = true;
+        }
       }
+      // --- CASO B: EL ACTOR YA TIENE PARTÍCULAS ---
+      // Mostramos todo el panel de control para editar el efecto visual.
+      else {
+        EmitterParams& params = particleEmitter->getParams();
 
-      bool castShadow = renderer->canCastShadow();
-      if (ImGui::Checkbox("Cast Shadows", &castShadow)) {
-        renderer->setCastShadow(castShadow);
-      }
+        // --- B1. PREAJUSTES (PRESETS) ---
+        // Botones rápidos que configuran todas las variables de golpe para lograr un efecto específico.
+        ImGui::TextDisabled("Cargar Presets:");
 
-      const std::vector<MaterialInstance*>& materialInstances = renderer->getMaterialInstances();
-      for (size_t i = 0; i < materialInstances.size(); ++i) {
-        MaterialInstance* materialInstance = materialInstances[i];
-        if (!materialInstance) {
-          continue;
+        if (ImGui::Button("Fuego")) {
+          params.spawnRate = 0.05f;
+          params.minLife = 0.5f;
+          params.maxLife = 1.5f;
+          params.startColor = EU::Vector3(1.0f, 0.3f, 0.0f);
+          params.endColor = EU::Vector3(1.0f, 0.0f, 0.0f);
+          params.startSize = 3.0f;
+          params.endSize = 0.1f;
+          params.emitterVelocity = EU::Vector3(0.0f, 2.0f, 0.0f);
+          params.gravityMultiplier = -0.2f; // Gravedad negativa para que las llamas suban
+          particleEmitter->setShape(EmitterShape::Point);
         }
 
-        std::string header = "Material Slot " + std::to_string(i);
-        if (ImGui::TreeNode(header.c_str())) {
-          Material* material = materialInstance->getMaterial();
-          MaterialParams& params = materialInstance->getParams();
+        ImGui::SameLine(); // Ponemos los botones uno al lado del otro
+        if (ImGui::Button("Chispas")) {
+          params.spawnRate = 0.02f;
+          params.minLife = 0.2f;
+          params.maxLife = 0.8f;
+          params.startColor = EU::Vector3(1.0f, 0.8f, 0.2f);
+          params.endColor = EU::Vector3(1.0f, 0.1f, 0.0f);
+          params.startSize = 1.0f;
+          params.endSize = 0.0f;
+          params.emitterVelocity = EU::Vector3(0.0f, 5.0f, 0.0f);
+          params.gravityMultiplier = 1.0f; // Gravedad normal para que las chispas caigan al piso
+          particleEmitter->setShape(EmitterShape::Point);
+        }
 
-          if (material) {
-            ImGui::Text("Domain: %s", GetMaterialDomainLabel(material->getDomain()));
-            ImGui::Text("Blend: %s", GetBlendModeLabel(material->getBlendMode()));
+        ImGui::SameLine();
+        if (ImGui::Button("Humo")) {
+          params.spawnRate = 0.1f;
+          params.minLife = 2.0f;
+          params.maxLife = 4.0f;
+          params.startColor = EU::Vector3(0.4f, 0.4f, 0.4f);
+          params.endColor = EU::Vector3(0.1f, 0.1f, 0.1f);
+          params.startSize = 1.0f;
+          params.endSize = 5.0f; // El humo se expande conforme envejece
+          params.emitterVelocity = EU::Vector3(0.0f, 1.0f, 0.0f);
+          params.gravityMultiplier = -0.1f; // Sube muy lentamente
+          particleEmitter->setShape(EmitterShape::Point);
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Burbujas")) {
+          params.spawnRate = 0.08f;
+          params.minLife = 1.5f;
+          params.maxLife = 3.0f;
+          params.startColor = EU::Vector3(0.2f, 0.6f, 1.0f);
+          params.endColor = EU::Vector3(0.0f, 0.2f, 0.8f);
+          params.startSize = 0.5f;
+          params.endSize = 1.5f;
+          params.emitterVelocity = EU::Vector3(0.0f, 3.0f, 0.0f);
+          params.gravityMultiplier = -0.05f; // Flotan súper suavemente
+          particleEmitter->setShape(EmitterShape::Sphere); // Salen de un área esférica, no de un solo punto
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        // --- B2. FORMA DE EMISIÓN (GEOMETRÍA) ---
+        // Permite elegir de qué tipo de volumen o figura geométrica nacen las partículas.
+        ImGui::TextDisabled("Forma de Generacion:");
+
+        // Primera fila de opciones
+        if (ImGui::Button("Punto Central")) { particleEmitter->setShape(EmitterShape::Point); }
+        ImGui::SameLine();
+        if (ImGui::Button("Esfera")) { particleEmitter->setShape(EmitterShape::Sphere); }
+        ImGui::SameLine();
+        if (ImGui::Button("Caja")) { particleEmitter->setShape(EmitterShape::Box); }
+
+        // Segunda fila de opciones
+        if (ImGui::Button("Circulo")) { particleEmitter->setShape(EmitterShape::Circle); }
+        ImGui::SameLine();
+        if (ImGui::Button("Anillo")) { particleEmitter->setShape(EmitterShape::Ring); }
+        ImGui::SameLine();
+        if (ImGui::Button("Cono")) { particleEmitter->setShape(EmitterShape::Cone); }
+        ImGui::SameLine();
+        if (ImGui::Button("Linea")) { particleEmitter->setShape(EmitterShape::Line); }
+
+        ImGui::Spacing();
+
+        // Inteligencia de la UI: Si elegimos un Punto o una Caja, no necesitamos el slider de radio, así que lo ocultamos.
+        // Si elegimos Esfera, Círculo, etc., lo mostramos para controlar su tamaño.
+        EmitterShape currentShape = particleEmitter->getShape();
+        if (currentShape != EmitterShape::Point && currentShape != EmitterShape::Box) {
+          float currentRadius = particleEmitter->getRadius();
+          // Controla tanto el radio de círculos/esferas como la longitud de líneas o altura de conos
+          if (ImGui::SliderFloat("Tamano/Radio", &currentRadius, 0.5f, 20.0f)) {
+            particleEmitter->setRadius(currentRadius);
           }
-
-          ImGui::ColorEdit4(("Base Color##" + std::to_string(i)).c_str(), &params.baseColor.x);
-          ImGui::SliderFloat(("Metallic##" + std::to_string(i)).c_str(), &params.metallic, 0.0f, 1.0f);
-          ImGui::SliderFloat(("Roughness##" + std::to_string(i)).c_str(), &params.roughness, 0.0f, 1.0f);
-          ImGui::SliderFloat(("AO##" + std::to_string(i)).c_str(), &params.ao, 0.0f, 1.0f);
-          ImGui::SliderFloat(("Normal Scale##" + std::to_string(i)).c_str(), &params.normalScale, 0.0f, 2.0f);
-          ImGui::SliderFloat(("Alpha Cutoff##" + std::to_string(i)).c_str(), &params.alphaCutoff, 0.0f, 1.0f);
-
-          ImGui::TreePop();
         }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        // --- B3. CONTROLES MANUALES (AJUSTE FINO) ---
+        // Aquí exponemos las variables individuales para que el usuario pueda crear efectos personalizados a mano.
+        ImGui::TextDisabled("Configuracion de Emision:");
+        // Velocidad de aparición (cuántas por segundo)
+        ImGui::SliderFloat("Spawn Rate (p/s)", &params.spawnRate, 0.0f, 500.0f);
+        // Slider doble para definir el rango de vida (cuánto duran antes de desaparecer)
+        ImGui::DragFloatRange2("Ciclo de Vida (s)", &params.minLife, &params.maxLife, 0.05f, 0.1f, 10.0f, "Min: %.2f", "Max: %.2f");
+
+        ImGui::Spacing();
+
+        ImGui::TextDisabled("Color y Apariencia:");
+        // Paletas de color (Color Pickers) para el inicio y fin de la vida de la partícula
+        ImGui::ColorEdit3("Start Color", &params.startColor.x);
+        ImGui::ColorEdit3("End Color", &params.endColor.x);
+
+        ImGui::Spacing();
+
+        // Checkboxes para permitir distintas geometrías al mismo tiempo (ej. chispas que son triángulos y círculos a la vez)
+        ImGui::TextDisabled("Forma de las Particulas (Mezclables):");
+        ImGui::Checkbox("Circulos", &params.allowCircles);
+        ImGui::SameLine();
+        ImGui::Checkbox("Cuadrados", &params.allowSquares);
+        ImGui::SameLine();
+        ImGui::Checkbox("Triangulos", &params.allowTriangles);
+        ImGui::Spacing();
+
+        // Color del borde de la partícula
+        ImGui::ColorEdit4("Outline Color", &params.outlineColor.x);
+
+        // Controles para cambiar de tamaño (ej. nacer grandes y morir pequeñas)
+        ImGui::SliderFloat("Start Size", &params.startSize, 0.01f, 20.0f);
+        ImGui::SliderFloat("End Size", &params.endSize, 0.0f, 20.0f);
+
+        ImGui::Spacing();
+
+        ImGui::TextDisabled("Fisica y Movimiento:");
+        // Multiplicador de gravedad: Si es positivo, caen. Si es negativo, flotan hacia arriba. Si es 0, no son afectadas.
+        ImGui::SliderFloat("Gravity Mult", &params.gravityMultiplier, -5.0f, 5.0f);
+
+        // Control vectorial (XYZ) para darle un empuje inicial en alguna dirección específica
+        float vel[3] = { params.emitterVelocity.x, params.emitterVelocity.y, params.emitterVelocity.z };
+        vec3Control("Velocity", vel, 0.0f, 100.0f);
+        params.emitterVelocity.x = vel[0];
+        params.emitterVelocity.y = vel[1];
+        params.emitterVelocity.z = vel[2];
       }
+
+      ImGui::EndTabItem();
     }
-  }
 
-  auto light = actor->getComponent<LightComponent>();
-  if (!light.isNull()) {
-    if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-      LightData& data = light->getLightData();
-
-      static const char* kLightTypes[] = { "Directional", "Point", "Spot" };
-      int currentType = static_cast<int>(data.type);
-      if (currentType < 0 || currentType > 2) currentType = 0;
-      if (ImGui::Combo("Type", &currentType, kLightTypes, IM_ARRAYSIZE(kLightTypes))) {
-        data.type = static_cast<LightType>(currentType);
-        if (data.type == LightType::Point && data.range <= 0.0f) {
-          data.range = 12.0f;
-        }
-      }
-
-      ImGui::ColorEdit3("Color", &data.color.x);
-      ImGui::SliderFloat("Intensity", &data.intensity, 0.0f, 10.0f);
-
-      if (data.type == LightType::Directional || data.type == LightType::Spot) {
-        ImGui::SliderFloat3("Direction", &data.direction.x, -1.0f, 1.0f);
-      }
-
-      if (data.type == LightType::Point || data.type == LightType::Spot) {
-        ImGui::SliderFloat("Range", &data.range, 0.0f, 100.0f);
-      }
-
-      bool castShadow = light->canCastShadow();
-      if (ImGui::Checkbox("Cast Shadow", &castShadow)) {
-        light->setCastShadow(castShadow);
-      }
-    }
+    ImGui::EndTabBar();
   }
 
   ImGui::End();
@@ -1018,7 +1155,7 @@ GUI::drawStudioTopRibbon()
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 4.0f));
-  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.80f, 0.36f, 0.07f, 0.85f));
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.10f, 0.85f));
 
   if (ImGui::Begin("##StudioMenuBar", nullptr, menuFlags))
   {
@@ -1074,7 +1211,7 @@ GUI::drawStudioTopRibbon()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 6.0f));
-  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.84f, 0.39f, 0.09f, 0.85f));
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.14f, 0.14f, 0.14f, 0.85f));
   ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.55f, 0.85f, 0.45f, 0.30f));
   ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.62f, 0.92f, 0.52f, 0.48f));
   ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.68f, 0.96f, 0.58f, 0.64f));
@@ -1148,8 +1285,16 @@ GUI::drawStudioTopRibbon()
 
     separatorGroup();
 
-    if (ribbonButton("##CreateLight", "Light", "Create", btnSize, false))
+    if (ribbonButton("##CreateLight", "Light", "Create", btnSize, false)) {
       m_requestCreateLightActor = true;
+    }
+
+    ImGui::SameLine();
+
+    // Nuevo botón para instanciar partículas respetando tu diseño Ribbon
+    if (ribbonButton("##CreateParticles", "Particles", "Create", btnSize, false)) {
+      m_requestCreateParticleActor = true;
+    }
 
     separatorGroup();
 
@@ -1319,6 +1464,13 @@ void GUI::drawGBufferDebugPanel(ID3D11ShaderResourceView* albedoMetallicSRV,
   if (ImGui::Button("Create Light Actor", ImVec2(-1, 30))) {
     m_requestCreateLightActor = true;
   }
+
+  // Agrega estas líneas justo debajo:
+  ImGui::Spacing();
+  if (ImGui::Button("Create Particle Actor", ImVec2(-1, 30))) {
+    m_requestCreateParticleActor = true;
+  }
+
   ImGui::Checkbox("Ver Factor de Sombra", &m_visualizeDeferredShadowFactor);
 
   ImGui::Spacing();

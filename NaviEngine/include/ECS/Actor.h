@@ -1,4 +1,10 @@
 #pragma once
+
+/**
+ * @file Actor.h
+ * @brief Declaración de la clase Actor, que representa entidades renderizables en la escena.
+ */
+
 #include "Prerequisites.h"
 #include "Entity.h"
 #include "Buffer.h"
@@ -10,10 +16,9 @@
 #include "DepthStencilState.h"
 
 class Device;
-
 class DeviceContext;
-
 class MeshComponent;
+class ParticleEmitterComponent;
 
 /**
  * @class Actor
@@ -22,7 +27,7 @@ class MeshComponent;
  * La clase Actor hereda de Entity y agrega funcionalidades completas para renderizado,
  * aplicación de texturas, buffers, transformaciones y sombreado.
  */
-class 
+class
 Actor : public Entity {
 public:
 
@@ -40,14 +45,17 @@ public:
   /**
    * @brief Destructor virtual por defecto.
    */
-  virtual 
-  ~Actor() = default;
-
-  void 
-  awake() override{}
+  virtual
+   ~Actor() = default;
 
   /**
-   * @brief Inicializa el actor. Implementación vacía.
+   * @brief Se ejecuta al despertar el actor (antes de la inicialización).
+   */
+  void
+  awake() override {}
+
+  /**
+   * @brief Inicializa el actor. Implementación vacía por defecto.
    */
   void
   init() override {}
@@ -67,10 +75,12 @@ public:
   void
   render(DeviceContext& deviceContext) override;
 
-
+  /**
+   * @brief Renderiza el actor específicamente para el pase de dibujado del Skybox.
+   * @param deviceContext Contexto del dispositivo usado para el render.
+   */
   void
   renderForSkybox(DeviceContext& deviceContext);
-
 
   /**
    * @brief Libera los recursos asociados al actor.
@@ -90,7 +100,7 @@ public:
    * @brief Obtiene el nombre del actor.
    * @return Nombre como cadena de texto.
    */
-  std::string 
+  std::string
   getName() { return m_name; }
 
   /**
@@ -102,24 +112,26 @@ public:
 
   /**
    * @brief Asigna texturas al actor.
-   * @param textures Vector de texturas.
+   * @param textures Vector de texturas a aplicar.
    */
   void
   setTextures(std::vector<Texture> textures) { m_textures = textures; }
 
   /**
    * @brief Obtiene las mallas internas del actor.
+   * @return Referencia constante al vector de MeshComponent.
    */
   const std::vector<MeshComponent>& getMeshes() const { return m_meshes; }
 
   /**
    * @brief Obtiene las texturas internas del actor.
+   * @return Referencia constante al vector de texturas asociadas.
    */
   const std::vector<Texture>& getTextures() const { return m_textures; }
 
   /**
    * @brief Define si el actor puede proyectar sombras.
-   * @param v Valor booleano.
+   * @param v Valor booleano (true para proyectar, false para no proyectar).
    */
   void
   setCastShadow(bool v) { castShadow = v; }
@@ -145,7 +157,7 @@ private:
   std::vector<Buffer> m_indexBuffers;       ///< Buffers de índices asociados a las mallas.
 
   //BlendState m_blendState;                // Estado de blending usado por el actor.
-  //RasterizerState m_rasterizer;                // Estado de rasterización usado por el actor.
+  //RasterizerState m_rasterizer;           // Estado de rasterización usado por el actor.
   SamplerState m_sampler;                   ///< Estado de muestreo de texturas.
   CBChangesEveryFrame m_model;              ///< Constant buffer con las transformaciones por frame.
   Buffer m_modelBuffer;                     ///< Buffer que contiene @c m_model.
@@ -154,10 +166,26 @@ private:
   ShaderProgram m_shaderShadow;             ///< Shader program utilizado para el renderizado de sombras.
   Buffer m_shaderBuffer;                    ///< Buffer auxiliar para datos de sombras.
   //BlendState m_shadowBlendState;          // Estado de blending específico para sombras.
-  DepthStencilState m_shadowDepthStencilState; // Estado de profundidad/estencil para sombras.
+  DepthStencilState m_shadowDepthStencilState; ///< Estado de profundidad/estencil para sombras.
   CBChangesEveryFrame m_cbShadow;           ///< Constant buffer exclusivo para sombreado.
 
   XMFLOAT4 m_LightPos;                      ///< Posición de la luz para proyección de sombras.
   std::string m_name = "Actor";             ///< Nombre identificador del actor.
   bool castShadow = true;                   ///< Indica si el actor proyecta sombras.
+
+  ParticleEmitterComponent* m_particleEmitter = nullptr; ///< Puntero al componente emisor de partículas asociado al actor.
+
+public:
+  /**
+   * @brief Asigna un componente emisor de partículas a este actor.
+   * @param emitter Puntero al ParticleEmitterComponent que se va a asociar.
+   */
+  void 
+  setParticleEmitter(ParticleEmitterComponent* emitter) { m_particleEmitter = emitter; }
+
+  /**
+   * @brief Obtiene el componente emisor de partículas asociado al actor.
+   * @return Puntero al ParticleEmitterComponent, o nullptr si no tiene ninguno asignado.
+   */
+  ParticleEmitterComponent* getParticleEmitter() const { return m_particleEmitter; }
 };

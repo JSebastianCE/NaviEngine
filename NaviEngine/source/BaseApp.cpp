@@ -449,6 +449,14 @@ BaseApp::update(float deltaTime) {
     }
   }
 
+  // Crear partículas desde el botón del ribbon
+  if (m_gui.consumeCreateParticleActorRequest()) {
+    EU::TSharedPointer<Actor> particleActor = createParticleActor();
+    if (!particleActor.isNull()) {
+      m_gui.selectedActorIndex = static_cast<int>(m_actors.size()) - 1;
+    }
+  }
+
   m_gui.drawViewportPanel(m_editorViewportPass.getSRV());
   m_gui.drawViewportLightIcons(m_actors, m_camera, m_lightIconTexture.m_textureFromImg);
  
@@ -673,6 +681,16 @@ BaseApp::render() {
 
   m_renderScene.clear();
   m_sceneGraph.gatherRenderScene(m_renderScene, m_camera);
+
+  for (auto& actor : m_actors) {
+    if (!actor.isNull()) {
+      auto particleComp = actor->getComponent<ParticleEmitterComponent>();
+      if (particleComp) {
+        m_renderScene.particleEmitters.push_back(particleComp.get());
+      }
+    }
+  }
+
   m_renderScene.skybox = &m_skybox;
 
   m_renderPipeline.render(
@@ -1212,4 +1230,74 @@ BaseApp::cloneActor(EU::TSharedPointer<Actor> original) {
   m_sceneGraph.addEntity(newActor.get());
 
   return newActor;
+}
+
+EU::TSharedPointer<Actor>
+BaseApp::createParticleActor(const std::string& name)
+{
+  // --- 1. CREACIÓN DEL ACTOR ---
+  // Intentamos crear una nueva entidad (Actor) en la memoria pasándole nuestro dispositivo gráfico.
+  EU::TSharedPointer<Actor> particleActor = EU::MakeShared<Actor>(m_device);
+
+  // Si por alguna razón nos quedamos sin memoria o falla la creación, 
+  // lanzamos un mensaje de error y detenemos el proceso devolviendo un puntero vacío.
+  if (particleActor.isNull()) {
+    ERROR("Main", "createParticleActor", "Failed to create Particle Actor.");
+    return particleActor;
+  }
+
+  // --- 2. GENERACIÓN AUTOMÁTICA DE NOMBRE ---
+  // Hacemos un recuento rápido de cuántos emisores de partículas ya existen en nuestra lista de actores.
+  // Esto nos servirá para darle un número único al nuevo emisor si el usuario no le puso nombre.
+  size_t particleCount = 0;
+  for (const auto& actor : m_actors) {
+    if (!actor.isNull() && !actor->getComponent<ParticleEmitterComponent>().isNull()) {
+      ++particleCount;
+    }
+  }
+
+  // Le asignamos el nombre al actor. 
+  // Si el texto 'name' viene vacío, lo bautizamos automáticamente (ej. "Particle Emitter 1", "Particle Emitter 2").
+  particleActor->setName(name.empty()
+    ? "Particle Emitter " + std::to_string(particleCount + 1)
+    : name);
+
+  // --- 3. CONFIGURACIÓN DEL COMPONENTE DE PARTÍCULAS ---
+  // Revisamos si el actor ya trae un componente de partículas por defecto.
+  EU::TSharedPointer<ParticleEmitterComponent> particleComp = particleActor->getComponent<ParticleEmitterComponent>();
+
+  if (!particleComp) {
+    // Si no lo tiene, lo construimos desde cero. 
+    // Le pasamos la dirección de memoria de nuestro dispositivo gráfico (&m_device) 
+    // para que el componente tenga acceso a la tarjeta gráfica y pueda crear sus recursos visuales.
+    particleComp = EU::MakeShared<ParticleEmitterComponent>(&m_device);
+
+    // Arrancamos el componente (esto carga los shaders, buffers y estados gráficos)
+    particleComp->init();
+
+    // Finalmente, "pegamos" este componente al actor.
+    particleActor->addComponent(particleComp);
+  }
+
+  // --- 4. POSICIÓN INICIAL EN EL MUNDO (TRANSFORM) ---
+  EU::TSharedPointer<Transform> transform = particleActor->getComponent<Transform>();
+  if (transform) {
+    // Para evitar que todos los emisores aparezcan exactamente en la misma coordenada (0,0,0) y se superpongan,
+    // usamos la cantidad de emisores creados para desplazarlos un poco hacia un lado (offset en el eje X).
+    const float offset = static_cast<float>(particleCount) * 2.0f;
+
+    // Lo colocamos en su nueva posición, sin rotación y con una escala normal (1x).
+    transform->setTransform(EU::Vector3(offset, 1.0f, 0.0f),
+      EU::Vector3(0.0f, 0.0f, 0.0f),
+      EU::Vector3(1.0f, 1.0f, 1.0f));
+  }
+
+  // --- 5. REGISTRO EN EL MOTOR ---
+  // Guardamos nuestro nuevo actor en la lista maestra y lo metemos al grafo de la escena
+  // para que el motor empiece a procesarlo (actualizar su lógica y dibujarlo en pantalla) en el próximo frame.
+  m_actors.push_back(particleActor);
+  m_sceneGraph.addEntity(particleActor.get());
+
+  // Devolvemos el actor recién horneado y listo para usarse.
+  return particleActor;
 }

@@ -20,6 +20,8 @@ class Device;
 class DeviceContext;
 class Camera;
 class Material;
+class ParticleEmitterComponent;
+
 
 /**
  * @class DeferredRenderer
@@ -30,7 +32,7 @@ class Material;
  * con el contenido actual del engine.
  */
 class
-	DeferredRenderer : public ISceneRenderer {
+DeferredRenderer : public ISceneRenderer {
 public:
 	/**
 	 * @brief Inicializa los recursos del pipeline diferido (G-Buffer, shaders, sombras).
@@ -138,8 +140,10 @@ private:
 	void updatePerFrame(const Camera& camera, const RenderScene& scene, DeviceContext& deviceContext);
 	/** @brief Actualiza las matrices para proyectar las sombras desde el punto de vista de la luz. */
 	void updateLightMatrices(const Camera& camera, const RenderScene& scene);
+
 	/** @brief Orquesta el pase para un target especifico. */
-	void renderSceneToTarget(DeviceContext& deviceContext, RenderScene& scene, EditorViewportPass& targetPass, bool applyShadows);
+	void renderSceneToTarget(DeviceContext& deviceContext, RenderScene& scene, const Camera& camera, EditorViewportPass& targetPass, bool applyShadows);
+
 	/** @brief Conecta las texturas del G-Buffer a la GPU para escribir en ellas. */
 	void bindGBufferTargets(DeviceContext& deviceContext, ID3D11DepthStencilView* depthStencilView);
 	/** @brief Conecta el target final donde se uniran todas las luces y colores. */
@@ -156,6 +160,10 @@ private:
 	void renderSkyboxPass(DeviceContext& deviceContext, RenderScene& scene);
 	/** @brief Dibuja los objetos que tienen transparencia (vidrio, hologramas) despues del pase de iluminacion. */
 	void renderTransparentPass(DeviceContext& deviceContext);
+
+	/** @brief Dibuja los emisores de partículas usando Additive Blending. */
+	void renderParticlesPass(DeviceContext& deviceContext, const Camera& camera, RenderScene& scene);
+
 	/** @brief Procesa el dibujo individual de un objeto para metodos directos (forward). */
 	void renderForwardObject(DeviceContext& deviceContext, const RenderObject& object, RenderPassType passType);
 	/** @brief Genera el mapa de profundidad ocultando lo que la luz no puede ver. */
@@ -189,6 +197,8 @@ private:
 	Buffer m_perObjectBuffer;
 	Buffer m_perMaterialBuffer;
 	Buffer m_lightingDebugBuffer;
+
+	Buffer m_particleMatrixBuffer;
 
 	/** @brief Buffers de geometria para el quad de pantalla completa. */
 	Buffer m_fullscreenVertexBuffer;

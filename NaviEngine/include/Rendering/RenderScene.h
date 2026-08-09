@@ -3,6 +3,7 @@
 #include "Rendering/RenderTypes.h"
 
 class Skybox;
+class ParticleEmitterComponent;
 
 /**
  * @class RenderScene
@@ -38,4 +39,7 @@ public:
 
   /** @brief Skybox de la escena. */
   Skybox* skybox = nullptr;
+
+  /** @brief Lista de emisores de partículas. */
+  std::vector<ParticleEmitterComponent*> particleEmitters;
 };

@@ -11,4 +11,7 @@ RenderScene::clear() {
 	transparentObjects.clear();
 	directionalLights.clear();
 	skybox = nullptr;
+
+	// Limpiamos la lista de partículas en cada frame
+	particleEmitters.clear();
 }

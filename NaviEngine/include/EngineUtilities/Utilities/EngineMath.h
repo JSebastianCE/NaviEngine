@@ -27,6 +27,7 @@
  * SOFTWARE.
 */
 #pragma once
+#include <cstdlib>
 namespace EU {
 
   // Constantes matemáticas
@@ -446,4 +447,22 @@ namespace EU {
     return fabs(a - b) < epsilon;
   }
 
-}
+  // Funciones de Aleatoriedad (Random)
+  /**
+   * @brief Genera un número de punto flotante aleatorio entre un valor mínimo y máximo.
+   *
+   * Utiliza la función lerp interna para calcular el valor final basándose en un ratio de 0.0 a 1.0.
+   *
+   * @param min Valor mínimo deseado.
+   * @param max Valor máximo deseado.
+   * @return Un número flotante aleatorio en el rango [min, max].
+   */
+  inline float randomFloat(float min, float max) {
+    // Genera un valor normalizado entre 0.0 y 1.0
+    float randomRatio = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+
+    // Aprovechamos tu propia función lerp para obtener el valor final
+    return lerp(min, max, randomRatio);
+  }
+} 
+

@@ -251,6 +251,9 @@
     <ClInclude Include="include\Rendering\RenderPipeline.h">
       <Filter>include\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="include\ECS\ParticleEmitterComponent.h">
+      <Filter>include\ECS</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -369,6 +372,9 @@
     <ClCompile Include="source\Rendering\DeferredRenderer.cpp">
       <Filter>source\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="source\ECS\ParticleEmitterComponent.cpp">
+      <Filter>source\ECS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\NaviEngine.fx">
@@ -387,6 +393,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="bin\DeferredLighting.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\ParticleShader.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

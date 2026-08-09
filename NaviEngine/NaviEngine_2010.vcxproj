@@ -452,6 +452,7 @@
     <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\DeviceContext.cpp" />
     <ClCompile Include="source\ECS\Actor.cpp" />
+    <ClCompile Include="source\ECS\ParticleEmitterComponent.cpp" />
     <ClCompile Include="source\EditorViewportPass.cpp" />
     <ClCompile Include="source\InputLayout.cpp" />
     <ClCompile Include="source\Model3D.cpp" />
@@ -493,6 +494,7 @@
     <ClInclude Include="include\ECS\Entity.h" />
     <ClInclude Include="include\ECS\LightComponent.h" />
     <ClInclude Include="include\ECS\MeshRendererComponent.h" />
+    <ClInclude Include="include\ECS\ParticleEmitterComponent.h" />
     <ClInclude Include="include\ECS\Transform.h" />
     <ClInclude Include="include\EngineUtilities\Memory\TSharedPointer.h" />
     <ClInclude Include="include\EngineUtilities\Memory\TStaticPtr.h" />
@@ -562,6 +564,11 @@
       <FileType>Document</FileType>
     </None>
     <None Include="bin\DeferredLighting.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\ParticleShader.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

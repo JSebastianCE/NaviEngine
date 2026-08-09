@@ -33,6 +33,8 @@
 #include "Rendering/RenderPipeline.h"
 #include "Rendering/RenderScene.h"
 
+#include "ECS/ParticleEmitterComponent.h"
+
 #include <string>
 
 extern IMGUI_IMPL_API
@@ -59,6 +61,8 @@ public:
 
 private:
   EU::TSharedPointer<Actor> createLightActor(const std::string& name = std::string());
+
+  EU::TSharedPointer<Actor> createParticleActor(const std::string& name = std::string());
 
   EU::TSharedPointer<Actor> cloneActor(EU::TSharedPointer<Actor> original);
 

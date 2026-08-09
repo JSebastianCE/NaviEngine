@@ -14,6 +14,7 @@
 #include "Rendering/Material.h"
 #include "Rendering/MaterialInstance.h"
 #include "Rendering/Mesh.h"
+#include "ECS/ParticleEmitterComponent.h"
 
 namespace {
 	constexpr unsigned int kGBufferTargetCount = 4;
@@ -145,6 +146,8 @@ DeferredRenderer::init(Device& device) {
 		return hr;
 	}
 
+	m_particleMatrixBuffer.init(device, sizeof(CBParticleMatrices));
+
 	return S_OK;
 }
 
@@ -167,9 +170,10 @@ DeferredRenderer::render(DeviceContext& deviceContext,
 	buildQueues(scene, camera);
 	updatePerFrame(camera, scene, deviceContext);
 
-	renderSceneToTarget(deviceContext, scene, m_preShadowDebugPass, false);
+	// TERCER ARGUMENTO DEBE SER 'camera'
+	renderSceneToTarget(deviceContext, scene, camera, m_preShadowDebugPass, false);
 	renderShadowPass(deviceContext);
-	renderSceneToTarget(deviceContext, scene, viewportPass, true);
+	renderSceneToTarget(deviceContext, scene, camera, viewportPass, true);
 }
 
 void
@@ -317,6 +321,7 @@ DeferredRenderer::updateLightMatrices(const Camera& camera, const RenderScene& s
 void
 DeferredRenderer::renderSceneToTarget(DeviceContext& deviceContext,
 	RenderScene& scene,
+	const Camera& camera,
 	EditorViewportPass& targetPass,
 	bool applyShadows) {
 	const float clearColor[4] = { 0.10f, 0.10f, 0.10f, 1.0f };
@@ -332,6 +337,9 @@ DeferredRenderer::renderSceneToTarget(DeviceContext& deviceContext,
 	renderLightingPass(deviceContext);
 	renderSkyboxPass(deviceContext, scene);
 	renderTransparentPass(deviceContext);
+
+	// Dibujamos las partículas justo antes de terminar el frame
+	renderParticlesPass(deviceContext, camera, scene);
 }
 
 void
@@ -917,4 +925,70 @@ DeferredRenderer::resolveBlendState(const Material* material) const {
 	default:
 		return m_alphaBlendState ? m_alphaBlendState : m_opaqueBlendState;
 	}
+}
+
+void
+DeferredRenderer::renderParticlesPass(DeviceContext& deviceContext, const Camera& camera, RenderScene& scene) {
+	// Si no hay ningún emisor de partículas en la escena, nos ahorramos todo este trabajo y salimos.
+	if (scene.particleEmitters.empty()) {
+		return;
+	}
+
+	// --- 1. CONFIGURACIÓN VISUAL: MEZCLA ADITIVA ---
+	// Le decimos a la tarjeta gráfica que sume los colores en lugar de reemplazarlos.
+	// Esto hace que cuando dos partículas se superponen, se vean más brillantes (ideal para magia o fuego).
+	deviceContext.OMSetBlendState(m_additiveBlendState, m_blendFactor, 0xffffffff);
+
+	// --- 2. CONFIGURACIÓN DE PROFUNDIDAD: LEER PERO NO ESCRIBIR ---
+	// Queremos que las partículas se oculten si están detrás de una pared (Depth Read),
+	// pero evitamos que se tapen las unas a las otras creando bordes feos (No Write).
+	m_transparentDepthStencil.render(deviceContext, 0, false);
+
+	// --- 3. DIBUJADO DE CADA EMISOR ---
+	for (ParticleEmitterComponent* emitter : scene.particleEmitters) {
+		if (emitter) {
+
+			// --- INICIO DE LA ACTUALIZACIÓN DE DATOS (CPU -> GPU) ---
+			// Preparamos un "paquete" de datos (Constant Buffer) que el shader necesita para dibujar.
+			CBParticleMatrices cbData;
+
+			// Matriz de mundo: Define dónde está el emisor en el universo 3D. 
+			// Por defecto está en el centro (Identidad), pero si tu emisor tiene un componente Transform, aquí lo aplicarías.
+			XMMATRIX world = XMMatrixIdentity();
+
+			// Transposición de matrices: 
+			// A DirectX y a su lenguaje de shaders (HLSL) les gusta leer los datos "girados". 
+			// Es un requisito estricto, así que preparamos las matrices de la cámara y del mundo de esta forma.
+			cbData.mWorld = XMMatrixTranspose(world);
+			cbData.mView = XMMatrixTranspose(camera.getView());
+			cbData.mProjection = XMMatrixTranspose(camera.getProj());
+
+			// Rescatamos los parámetros que el usuario configuró en la interfaz (ImGui)
+			auto emitterParams = emitter->getParams();
+
+			// Empaquetamos el color del borde de la partícula (Rojo, Verde, Azul) y le fijamos un Alfa de 1.0 (sólido)
+			cbData.OutlineColor = XMFLOAT4(
+				emitterParams.outlineColor.x,
+				emitterParams.outlineColor.y,
+				emitterParams.outlineColor.z,
+				1.0f
+			);
+
+			// Subimos este paquete de datos actualizado a la tarjeta gráfica
+			m_particleMatrixBuffer.update(deviceContext, nullptr, 0, nullptr, &cbData, 0, 0);
+
+			// Conectamos este buffer al Vertex Shader (en el "enchufe" o registro 0 / b0 en HLSL).
+			// El 'false' indica que esto va para el Vertex Shader (geometría), no para el Pixel Shader (colores).
+			m_particleMatrixBuffer.render(deviceContext, 0, 1, false);
+			// --- FIN DE LA ACTUALIZACIÓN DE DATOS ---
+
+			// ¡Luz verde! Mandamos a dibujar toda la geometría de este emisor específico.
+			emitter->render(deviceContext);
+		}
+	}
+
+	// --- 4. LIMPIEZA ---
+	// Restauramos la mezcla a "opaco" (la normal) por seguridad. 
+	// Si no hacemos esto, cualquier modelo 3D normal que se dibuje después se verá transparente o brillante.
+	deviceContext.OMSetBlendState(m_opaqueBlendState, m_blendFactor, 0xffffffff);
 }

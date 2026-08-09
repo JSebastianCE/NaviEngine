@@ -2,6 +2,7 @@
 #include "MeshComponent.h"
 #include "Device.h"
 #include "DeviceContext.h"
+#include "ECS/ParticleEmitterComponent.h"
 
 Actor::Actor(Device& device) {
 	// Setup Default Components
@@ -29,16 +30,23 @@ Actor::Actor(Device& device) {
 
 void
 Actor::update(float deltaTime, DeviceContext& deviceContext) {
-	// Update all components
+	// Update all components (Si el emisor fue agregado por addComponent, se actualizará aquí)
 	for (auto& component : m_components) {
 		if (component) {
 			component->update(deltaTime);
 		}
 	}
 
+	// Actualización manual del emisor de partículas
+	// (Por si lo asignaste con setParticleEmitter pero no con addComponent)
+	if (m_particleEmitter) {
+		m_particleEmitter->update(deltaTime);
+	}
+	
 	// Update the model buffer
 	m_model.mWorld = XMMatrixTranspose(getComponent<Transform>()->matrix);
 	m_model.vMeshColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
 	// Update the constant buffer
 	m_modelBuffer.update(deviceContext, nullptr, 0, nullptr, &m_model, 0, 0);
 }
